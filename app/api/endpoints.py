@@ -164,9 +164,16 @@ async def process_message(
         # Check if we have enough intelligence
         has_enough_intelligence = session.intelligence.count_items() >= settings.min_intelligence_items
         
-        # Stage 5: Send GUVI callback if conversation complete
-        if should_complete and session.scam_detected and not session.is_complete:
-            logger.info(f"Session {request.sessionId} completing - sending GUVI callback")
+        # Stage 5: Send GUVI callback if conversation complete OR enough intelligence extracted
+        # CRITICAL: Send callback when intelligence extracted, not just at max turns
+        # This ensures GUVI evaluation works even if test stops before max_turns
+        should_send_callback = (should_complete or has_enough_intelligence) and session.scam_detected and not session.is_complete
+        
+        if should_send_callback:
+            if has_enough_intelligence:
+                logger.info(f"Session {request.sessionId} has {session.intelligence.count_items()} intelligence items - sending GUVI callback")
+            else:
+                logger.info(f"Session {request.sessionId} completing - sending GUVI callback")
             
             agent_notes = agent_orchestrator.get_agent_notes(session)
             

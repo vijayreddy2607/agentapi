@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # Session Configuration
     session_timeout_seconds: int = 300
     max_conversation_turns: int = 30
-    min_intelligence_items: int = 2
+    min_intelligence_items: int = 1  # Lowered from 2 to trigger callback faster
     
     # Application Settings
     log_level: str = "INFO"
