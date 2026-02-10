@@ -612,7 +612,26 @@ PERSONA_TEMPLATES = {
 
 def get_persona_templates(persona: str) -> dict:
     """Get templates for a specific persona."""
-    return PERSONA_TEMPLATES.get(persona, PERSONA_TEMPLATES["normal_persona"])
+    # Direct match
+    if persona in PERSONA_TEMPLATES:
+        return PERSONA_TEMPLATES[persona]
+    
+    # Try mapping common variations
+    persona_lower = persona.lower()
+    
+    if "uncle" in persona_lower:
+        return PERSONA_TEMPLATES["uncle_persona"]
+    elif "aunty" in persona_lower or "sunita" in persona_lower:
+        return PERSONA_TEMPLATES["aunty_persona"]
+    elif "student" in persona_lower or "arjun" in persona_lower:
+        return PERSONA_TEMPLATES["student_persona"]
+    elif "worried" in persona_lower:
+        return PERSONA_TEMPLATES["worried_persona"]
+    elif "tech" in persona_lower:
+        return PERSONA_TEMPLATES["techsavvy_student"]  # Map to techsavvy_student
+    
+    # Fallback to normal persona
+    return PERSONA_TEMPLATES["normal_persona"]
 
 
 def get_all_templates_as_examples(persona: str) -> str:
