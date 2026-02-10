@@ -6,7 +6,7 @@ from typing import Literal
 class Intelligence(BaseModel):
     """Accumulated intelligence from conversations."""
     bankAccounts: set[str] = Field(default_factory=set)
-    upilds: set[str] = Field(default_factory=set)
+    upiIds: set[str] = Field(default_factory=set)  # Fixed typo: was 'upilds'
     phishingLinks: set[str] = Field(default_factory=set)
     phoneNumbers: set[str] = Field(default_factory=set)
     suspiciousKeywords: set[str] = Field(default_factory=set)
@@ -17,7 +17,7 @@ class Intelligence(BaseModel):
     
     def add_upi_id(self, upi_id: str):
         """Add a UPI ID to intelligence."""
-        self.upilds.add(upi_id)
+        self.upiIds.add(upi_id)
 
     
     def add_phishing_link(self, link: str):
@@ -36,7 +36,7 @@ class Intelligence(BaseModel):
         """Convert to dictionary with lists instead of sets."""
         return {
             "bankAccounts": list(self.bankAccounts),
-            "upilds": list(self.upilds),
+            "upiIds": list(self.upiIds),  # Fixed typo: was 'upilds'
             "phishingLinks": list(self.phishingLinks),
             "phoneNumbers": list(self.phoneNumbers),
             "suspiciousKeywords": list(self.suspiciousKeywords)
@@ -46,7 +46,7 @@ class Intelligence(BaseModel):
         """Count total intelligence items."""
         return (
             len(self.bankAccounts) +
-            len(self.upilds) +
+            len(self.upiIds) +
             len(self.phishingLinks) +
             len(self.phoneNumbers) +
             len(self.suspiciousKeywords)
