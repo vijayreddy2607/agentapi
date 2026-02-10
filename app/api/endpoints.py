@@ -9,7 +9,7 @@ from app.core.session_manager_enhanced import session_manager
 from app.core.scam_detector import ScamDetector
 from app.core.intelligence_extractor import IntelligenceExtractor
 from app.core.agent_orchestrator import agent_orchestrator
-from app.core.relevance_detector import relevance_detector_orchestrator
+from app.core.relevance_detector import relevance_detector
 from app.utils import send_guvi_callback
 from app.models.guvi_response import GUVISimpleResponse
 from app.config import settings
