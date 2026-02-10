@@ -176,7 +176,9 @@ async def process_message(
         )
         
         # Check if we have enough intelligence
-        has_enough_intelligence = session.intelligence.count_items() >= settings.min_intelligence_items
+        # CRITICAL: Use count_valuable_items() to exclude keywords
+        # Keywords alone don't prove extraction - we need phone/account/UPI
+        has_enough_intelligence = session.intelligence.count_valuable_items() >= settings.min_intelligence_items
         
         # Stage 5: Send GUVI callback if conversation complete OR enough intelligence extracted
         # CRITICAL: Send callback when intelligence extracted, not just at max turns

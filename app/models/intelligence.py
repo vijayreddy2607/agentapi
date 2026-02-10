@@ -43,13 +43,26 @@ class Intelligence(BaseModel):
         }
     
     def count_items(self) -> int:
-        """Count total intelligence items."""
+        """Count total intelligence items (including keywords)."""
         return (
             len(self.bankAccounts) +
             len(self.upiIds) +
             len(self.phishingLinks) +
             len(self.phoneNumbers) +
             len(self.suspiciousKeywords)
+        )
+    
+    def count_valuable_items(self) -> int:
+        """Count ONLY valuable intelligence (excludes keywords).
+        
+        This is used to determine when to send GUVI callback.
+        Keywords alone don't prove extraction is working.
+        """
+        return (
+            len(self.bankAccounts) +
+            len(self.upiIds) +
+            len(self.phishingLinks) +
+            len(self.phoneNumbers)
         )
 
 
