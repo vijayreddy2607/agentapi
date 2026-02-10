@@ -6,8 +6,7 @@ WORKDIR /app
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080
+    PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -26,9 +25,7 @@ COPY . .
 # Create directory for SQLite database
 RUN mkdir -p /app/data
 
-# Expose port (Cloud Run standard is 8080)
-EXPOSE 8080
-
 # Run the application
+# Render injects PORT env var - use it or default to 8080 for local testing
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
 
