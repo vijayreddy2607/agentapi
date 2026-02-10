@@ -180,16 +180,21 @@ async def process_message(
         # Keywords alone don't prove extraction - we need phone/account/UPI
         has_enough_intelligence = session.intelligence.count_valuable_items() >= settings.min_intelligence_items
         
-        # Stage 5: Send GUVI callback if conversation complete OR enough intelligence extracted
-        # CRITICAL: Send callback when intelligence extracted, not just at max turns
-        # This ensures GUVI evaluation works even if test stops before max_turns
-        should_send_callback = (should_complete or has_enough_intelligence) and session.scam_detected and not session.is_complete
+        # Stage 5: Send GUVI callback if conversation complete OR intelligence increased
+        # CRITICAL: Send callback when intelligence increases, but DO NOT close session unless complete
+        current_intel_count = session.intelligence.count_valuable_items()
         
-        if should_send_callback:
-            if has_enough_intelligence:
-                logger.info(f"Session {request.sessionId} has {session.intelligence.count_items()} intelligence items - sending GUVI callback")
+        # Check if we should update GUVI (new intel or conversation ending)
+        # We store previous count in session metadata or just check if current > 0
+        # For now, we'll send update if we have valuable intel
+        
+        should_send_update = has_enough_intelligence or should_complete
+        
+        if should_send_update and session.scam_detected:
+            if should_complete:
+                 logger.info(f"Session {request.sessionId} completing - sending FINAL GUVI callback")
             else:
-                logger.info(f"Session {request.sessionId} completing - sending GUVI callback")
+                 logger.info(f"Session {request.sessionId} has {current_intel_count} items - sending INTERMEDIATE GUVI callback")
             
             agent_notes = agent_orchestrator.get_agent_notes(session)
             
@@ -207,8 +212,11 @@ async def process_message(
                 agent_notes=agent_notes
             )
             
-            if callback_success:
+            # Only mark complete if conversation is actually over
+            if callback_success and should_complete:
                 session_manager.mark_complete(request.sessionId)
+                
+            # If intermediate update, we continue conversation!
         
         # Stage 5: Update RL Agent with Reward (NEW!)
         if session.scam_detected and rl_action:
