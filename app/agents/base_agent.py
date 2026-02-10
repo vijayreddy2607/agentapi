@@ -44,28 +44,20 @@ class BaseAgent(ABC):
         scam_type: Optional[str] = None
     ) -> str:
         """
-        HYBRID STRATEGY + TURN-BASED INTELLIGENCE EXTRACTION:
-        - Turns 1-2: Use stateful fallback (fast, predictable, no repetition)
-        - Turns 3-6: Advanced LLM (ASK QUESTIONS phase)
-        - Turns 7-9: Advanced LLM (REVERSE EXTRACTION - get scammer's info!)
-        - Turns 10+: Advanced LLM (DELAY TACTICS)
+        LLM-FIRST STRATEGY with Fast Fallback:
+        - ALL TURNS: Try Advanced LLM first (with 4s timeout)
+        - Turns 1-2: BUILD TRUST phase - natural reactions like "Kya?! Block? Why?"
+        - Turns 3-6: ASK QUESTIONS phase
+        - Turns 7-9: REVERSE EXTRACTION - get scammer's info!
+        - Turns 10+: DELAY TACTICS
+        - If LLM times out (>4s), fall back to persona templates
         - ALL responses enhanced with human-like typos and errors ✨
         """
         # Count only scammer messages (conversation_history has both scammer+agent)
         turn_count = len([msg for msg in (conversation_history or []) if msg.get("sender") == "scammer"])
         
-        # FIRST 2 TURNS: Always use stateful fallback (FAST!)
-        if turn_count < 3:
-            logger.info(f"{self.persona_name} Turn {turn_count}: Using stateful fallback (fast mode)")
-            response = self._get_stateful_fallback(scammer_message, turn_count)
-            self._update_state(scammer_message, response)
-            
-            # ✨ Make response more human-like!
-            response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
-            return response
-        
-        # TURNS 3+: Use Advanced ResponseGenerator with turn-based strategy 🔥
-        logger.info(f"🔥 {self.persona_name} Turn {turn_count}: Using Advanced ResponseGenerator")
+        # Use Advanced ResponseGenerator with turn-based strategy 🔥
+        logger.info(f"🔥 {self.persona_name} Turn {turn_count}: Using Advanced LLM (4s timeout)")
         
         if self.response_generator:
             try:
