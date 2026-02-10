@@ -127,6 +127,7 @@ class AgentOrchestrator:
             conversation_history=conversation_history,
             additional_context=rl_strategy_prompt,  # Pass RL strategy with phase
             scam_type=session.scam_type
+        )
         
         # CRITICAL: Strip ALL emojis from response (LLM sometimes generates despite ban)
         # Unicode emoji ranges: https://unicode.org/emoji/charts/full-emoji-list.html
