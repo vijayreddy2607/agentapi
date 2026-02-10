@@ -1,0 +1,77 @@
+# Don't push these large/unnecessary files
+*.db
+*.sqlite
+*.pth
+*.pkl
+*.zip
+*.csv
+*.log
+*.pid
+safe_scam_model/
+safe_training_output/
+phishing_email.csv
+Dataset_5971.csv
+indian_scam_dataset.csv
+training_log.txt
+test_results.txt
+
+# Documentation (too many, keep only essential)
+AGENT_ANALYSIS.md
+ALL_TASKS_COMPLETE.md
+COMPLETE_SUMMARY.md
+COOL_TRAINING_SUMMARY.md
+DATABASE_DECISION.md
+DATABASE_REPORT.md
+DATASET_DOWNLOAD_INSTRUCTIONS.md
+DATA_DOCUMENTATION.md
+DEPLOYMENT_CHECKLIST.md
+FREE_READY.md
+FREE_SETUP_GUIDE.md
+GOODNIGHT_SUMMARY.md
+IMPROVEMENTS.md
+OVERNIGHT_TRAINING.md
+QUICKSTART.md
+QUICKSTART_IMPROVEMENTS.md
+QUICK_START.md
+REAL_DATA_TRAINING_STATUS.md
+RL_COMPLETE.md
+RL_IMPLEMENTATION.md
+RL_STRATEGY.md
+RL_TEST_RESULTS.md
+SCAMMER_TEST_GUIDE.md
+START_HERE.md
+STATUS_SUMMARY.md
+STORAGE_ARCHITECTURE.md
+TESTING_SUMMARY.md
+TRAINING_GUIDE.md
+TRAINING_STATUS.md
+WHEN_YOURE_BACK.md
+
+# Test files
+test_*.py
+*_test.py
+verify_behavior.py
+run_behavior_test.py
+
+# Scripts
+*.sh
+scripts/
+
+# Old/backup files
+*_old.*
+*_safe.*
+honeypot_agent_complete.py
+advanced_scam_detector.py
+indian_scam_dataset.py
+safe_model_loader.py
+safe_training_overnight.py
+
+# Environment
+.env
+.env.local
+__pycache__/
+*.pyc
+venv/
+.DS_Store
+.vscode/
+.idea/
