@@ -228,19 +228,46 @@ Generate ONE SHORT message (1-2 sentences max)."""
             else:
                 temperature = 0.95  # High variety for later turns
             
-            # Generate with LLM
-            response = await self.llm_client.generate_response(
-                system_prompt=system_prompt,
-                user_message=user_message,
-                temperature=temperature,
-                max_tokens=60  # Force very short responses (like real SMS/chat)
+            # CRITICAL: Wrap with timeout to meet GUVI's 6-second deadline
+            # If LLM takes >4s, we fall back to template (ensuring <6s total response)
+            import asyncio
+            response = await asyncio.wait_for(
+                self.llm_client.generate_response(
+                    system_prompt=system_prompt,
+                    user_message=user_message,
+                    temperature=temperature,
+                    max_tokens=40  # Reduced from 60 for faster generation
+                ),
+                timeout=4.0  # 4s max for LLM, leaving 2s for processing/network
             )
             
-            logger.info(f"Response generated: {response[:100]}...")
+            logger.info(f"✅ LLM response generated in <4s: {response[:100]}...")
             return response
             
-        except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
+        except asyncio.TimeoutError:
+            logger.warning(f"⏱️ LLM timeout after 4s - using template fallback")
+            # Fallback logic (same as below)
+            persona_data = get_persona_templates(persona)
+            templates = persona_data["templates"]
+            
+            if turn_number <= 2:
+                # Use one of the first 2 templates (Intro)
+                import random
+                fallback = templates[random.randint(0, min(1, len(templates)-1))]
+            else:
+                # Use mid-conversation templates (indices 2-16 approx)
+                # Ensure we don't go out of bounds
+                import random
+                start_idx = 2
+                end_idx = min(16, len(templates)-1)
+                if start_idx <= end_idx:
+                    fallback = templates[random.randint(start_idx, end_idx)]
+                else:
+                    fallback = templates[0]
+            
+            logger.info(f"Using template fallback (Turn {turn_number}): {fallback[:50]}...")
+            return fallback
+
             # Fallback logic
             persona_data = get_persona_templates(persona)
             templates = persona_data["templates"]
