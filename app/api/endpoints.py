@@ -91,10 +91,24 @@ async def process_message(
             agent_orchestrator.get_agent(scam_result.recommended_agent, session)
         
         # Stage 2: Extract Intelligence from scammer's message
+        logger.info(f"🔍 EXTRACTING INTELLIGENCE from scammer message: '{request.message.text}'")
         extractor = IntelligenceExtractor()
         extractor.intelligence = session.intelligence  # Use session's accumulated intelligence
+        
+        # Log BEFORE extraction
+        logger.info(f"📊 Intelligence BEFORE extraction: {session.intelligence.count_items()} items")
+        logger.info(f"   - Phones: {list(session.intelligence.phoneNumbers)}")
+        logger.info(f"   - Accounts: {list(session.intelligence.bankAccounts)}")
+        logger.info(f"   - UPI IDs: {list(session.intelligence.upiIds)}")
+        
         extractor.extract_from_message(request.message.text)
         session.intelligence = extractor.get_intelligence()
+        
+        # Log AFTER extraction
+        logger.info(f"📊 Intelligence AFTER extraction: {session.intelligence.count_items()} items")
+        logger.info(f"   - Phones: {list(session.intelligence.phoneNumbers)}")
+        logger.info(f"   - Accounts: {list(session.intelligence.bankAccounts)}")
+        logger.info(f"   - UPI IDs: {list(session.intelligence.upiIds)}")
         
         # Stage 2.3: Relevance Check (NEW! - Stop on irrelevant messages)
         if session.scam_detected and session.total_messages > 1:

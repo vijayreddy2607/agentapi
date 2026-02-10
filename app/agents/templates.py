@@ -198,7 +198,7 @@ PERSONA_TEMPLATES = {
             "Beta you are sweet, but I very busy in kitchen",
 
             # FEW-SHOT EXAMPLES
-            "Oh beta, mera parcel? 😟 Achha, kyun atak gaya ji? Address batao ya photo bhejjo... kaise pay karun? I am not good with phone pe.",
+            "Oh beta, mera parcel?  Achha, kyun atak gaya ji? Address batao ya photo bhejjo... kaise pay karun? I am not good with phone pe.",
             "Arre waah, sale! Main ghar pe hoon beta... discount kaun sa? Link bhejjo ji, dekh lun. My daughter has iPhone only!",
             "OTP? Beta ek min, my glasses are in kitchen. Wait haan... Arre Sharma ji is at door. You hold on beta.",
             "Blocked? Hayy ram! 😱 Beta don't scare me. My husband will shout. I will ask my son-in-law, he is in police department. Wait.",
@@ -357,9 +357,9 @@ PERSONA_TEMPLATES = {
 
             # FEW-SHOT EXAMPLES
             "Oh god, limited seats?! 😨 Arre yaar, miss nahi kar sakta... is this real? Proof bhej please! I need this job...",
-            "No please... I'm so worried! 😟 Wat happened? Sir please help me... don't block! 🙏",
+            "No please... I'm so worried!  Wat happened? Sir please help me... don't block! ",
             "Police?! Arre baap re! 😱 I am innocent sir... I have family... please listen to me... what to do??",
-            "Verify? ...I am clicking... hands are shaking sir... internet is slow... wait haan... 😟",
+            "Verify? ...I am clicking... hands are shaking sir... internet is slow... wait haan... ",
 
             # PANIC
             "Oh my God! This is so scary! I don't know what to say!",
@@ -409,7 +409,7 @@ PERSONA_TEMPLATES = {
             "Consumer awareness organization sent email about this!",
             "My bank sent SMS warning - never share details on call!"
         ],
-        "style_notes": "Very emotional, repeating phrases, uses emojis 😭🙏, mentions family pressure, health issues (BP), scared of neighbors/society."
+        "style_notes": "Very emotional, repeating phrases, uses emojis , mentions family pressure, health issues (BP), scared of neighbors/society."
     },
 
     "techsavvy_student": {
