@@ -20,7 +20,7 @@ class EngagementMetrics(BaseModel):
 class ExtractedIntelligence(BaseModel):
     """Intelligence extracted from the conversation."""
     bankAccounts: list[str] = Field(default_factory=list)
-    upilds: list[str] = Field(default_factory=list)
+    upiIds: list[str] = Field(default_factory=list)
     phishingLinks: list[str] = Field(default_factory=list)
     phoneNumbers: list[str] = Field(default_factory=list)
     suspiciousKeywords: list[str] = Field(default_factory=list)
@@ -51,7 +51,7 @@ class MessageResponse(BaseModel):
                 },
                 "extractedIntelligence": {
                     "bankAccounts": [],
-                    "upilds": [],
+                    "upiIds": [],
                     "phishingLinks": [],
                     "phoneNumbers": [],
                     "suspiciousKeywords": ["blocked", "verify"]

@@ -160,7 +160,7 @@ class EnhancedSessionManager:
                 db.add(db_message)
             
             # Save intelligence
-            for upi in session.intelligence.upilds:
+            for upi in session.intelligence.upiIds:
                 db.add(IntelligenceModel(
                     session_id=session.session_id,
                     type="upi",
