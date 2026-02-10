@@ -35,6 +35,10 @@ async def send_guvi_callback(
         "agentNotes": agent_notes
     }
     
+    # LOG THE EXACT PAYLOAD BEING SENT
+    import json
+    logger.info(f\"📤 Sending GUVI Callback to: {settings.guvi_callback_url}\")\n    logger.info(f\"📤 Payload: {json.dumps(payload, indent=2)}\")
+    
     max_retries = 3
     for attempt in range(max_retries):
         try:

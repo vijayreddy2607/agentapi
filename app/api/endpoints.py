@@ -179,17 +179,19 @@ async def process_message(
         # Check if we have enough intelligence
         # CRITICAL: Use count_valuable_items() to exclude keywords
         # Keywords alone don't prove extraction - we need phone/account/UPI
-        has_enough_intelligence = session.intelligence.count_valuable_items() >= settings.min_intelligence_items
+        current_intel_count = session.intelligence.count_valuable_items()
+        has_enough_intelligence = current_intel_count >= settings.min_intelligence_items
+        
+        # VERBOSE LOGGING FOR DEBUGGING
+        logger.info(f"📊 Intelligence Check: count={current_intel_count}, threshold={settings.min_intelligence_items}")
+        logger.info(f"📊 Extracted: phones={len(session.intelligence.phoneNumbers)}, accounts={len(session.intelligence.bankAccounts)}, upi={len(session.intelligence.upiIds)}")
+        logger.info(f"📊 Should complete={should_complete}, Has enough intel={has_enough_intelligence}")
         
         # Stage 5: Send GUVI callback if conversation complete OR intelligence increased
         # CRITICAL: Send callback when intelligence increases, but DO NOT close session unless complete
-        current_intel_count = session.intelligence.count_valuable_items()
-        
-        # Check if we should update GUVI (new intel or conversation ending)
-        # We store previous count in session metadata or just check if current > 0
-        # For now, we'll send update if we have valuable intel
         
         should_send_update = has_enough_intelligence or should_complete
+        logger.info(f"📤 GUVI Callback Decision: should_send_update={should_send_update} (scam_detected={session.scam_detected})")
         
         if should_send_update and session.scam_detected:
             if should_complete:
