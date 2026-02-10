@@ -64,6 +64,32 @@ class Intelligence(BaseModel):
             len(self.phishingLinks) +
             len(self.phoneNumbers)
         )
+    
+    def predict_bank_names(self) -> list[str]:
+        """Predict bank names based on account number length."""
+        predictions = []
+        for account in self.bankAccounts:
+            # Remove any separators for length check
+            clean_acc = account.replace("-", "").replace(" ", "")
+            length = len(clean_acc)
+            
+            bank_name = "Unknown Bank"
+            if length == 11:
+                bank_name = "SBI (State Bank of India)"
+            elif length == 12:
+                bank_name = "ICICI Bank"
+            elif length == 13:
+                bank_name = "Canara Bank"
+            elif length == 14:
+                bank_name = "HDFC / Kotak / Bank of Baroda"
+            elif length == 15:
+                bank_name = "Axis / Union Bank"
+            elif length == 16:
+                bank_name = "Punjab National Bank (PNB)"
+            
+            predictions.append(f"{account} ({bank_name})")
+        
+        return predictions
 
 
 class ScamDetection(BaseModel):

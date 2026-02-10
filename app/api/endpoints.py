@@ -193,6 +193,11 @@ async def process_message(
             
             agent_notes = agent_orchestrator.get_agent_notes(session)
             
+            # Add bank predictions to notes
+            bank_predictions = session.intelligence.predict_bank_names()
+            if bank_predictions:
+                agent_notes += f" | Potential Banks: {', '.join(bank_predictions)}"
+            
             # Send callback (don't block on failure)
             callback_success = await send_guvi_callback(
                 session_id=request.sessionId,
