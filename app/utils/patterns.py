@@ -2,10 +2,11 @@
 import re
 
 # UPI ID Pattern: word@word (e.g., scammer@paytm, user@ybl)
-UPI_PATTERN = re.compile(r'\b([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)\b')
+UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 
-# Bank Account Pattern: 9-18 digits, optionally with dashes
-BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{4}[-\s]?\d{4}[-\s]?\d{4,10}|\d{9,18})\b')
+# Bank Account Pattern: 11-18 digits (excludes 10-digit phone numbers)
+# Changed from \d{9,18} to \d{11,18} to prevent phone number false positives
+BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{4}[-\s]?\d{4}[-\s]?\d{4,10}|\d{11,18})\b')
 
 # Phone Number Pattern: Indian phone numbers
 PHONE_PATTERN = re.compile(r'\+?91[-\s]?[6-9]\d{9}|\b[6-9]\d{9}\b')
