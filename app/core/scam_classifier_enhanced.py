@@ -33,7 +33,9 @@ class EnhancedScamClassifier:
         "credit_card": {
             "keywords": ["cvv", "card number", "credit card", "debit card",
                         "pin", "otp", "card details", "card blocked",
-                        "card verification"],
+                        "card verification", "suspicious activity", "fraud transaction",
+                        "card ending", "fraud department", "card security",
+                        "block transaction", "verify card"],
             "weight": 1.0
         },
         
