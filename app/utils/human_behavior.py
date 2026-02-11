@@ -160,26 +160,6 @@ class HumanBehavior:
         # Remove some commas
         if ',' in text and random.random() > 0.5:
             text = text.replace(',', '', 1)
-        
-        return text
-    
-                emotion = "excited"
-            elif "?" in text:
-                emotion = "confused"
-            elif any(word in text.lower() for word in ["problem", "issue", "wrong", "blocked"]):
-                emotion = "worried"
-            else:
-                emotion = "hesitant"
-        
-        if emotion in self.EMOTIONAL_MARKERS:
-            marker = random.choice(self.EMOTIONAL_MARKERS[emotion])
-            
-            # Add marker if not already very expressive
-            if text.count('!') < 2 and text.count('?') < 2:
-                if text.endswith(('.', '!', '?')):
-                    text = text[:-1]
-                text = f"{text} {marker}"
-        
         return text
     
     def enhance(self, text: str, persona: str = "uncle", turn_count: int = 0) -> str:
