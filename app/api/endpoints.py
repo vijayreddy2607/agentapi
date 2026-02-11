@@ -24,7 +24,8 @@ router = APIRouter()
 scam_detector = ScamDetector()
 
 
-@router.post("/api/message", response_model=GUVISimpleResponse)
+@router.post("/")  # Root endpoint - base URL and endpoint URL are same
+@router.post("/api/message", response_model=GUVISimpleResponse)  # Also keep old endpoint for compatibility
 async def process_message(
     request: MessageRequest,
     background_tasks: BackgroundTasks,
