@@ -26,25 +26,46 @@ class IntelligenceExtractor:
         upi_ids = patterns.extract_upi_ids(text)
         for upi_id in upi_ids:
             self.intelligence.add_upi_id(upi_id)
-            logger.info(f"Extracted UPI ID: {upi_id}")
+            logger.info(f"✅ Extracted UPI ID: {upi_id}")
         
         # Extract bank accounts
         bank_accounts = patterns.extract_bank_accounts(text)
         for account in bank_accounts:
             self.intelligence.add_bank_account(account)
-            logger.info(f"Extracted bank account: {account}")
+            logger.info(f"✅ Extracted bank account: {account}")
         
         # Extract phone numbers
         phone_numbers = patterns.extract_phone_numbers(text)
         for phone in phone_numbers:
             self.intelligence.add_phone_number(phone)
-            logger.info(f"Extracted phone number: {phone}")
+            logger.info(f"✅ Extracted phone number: {phone}")
         
         # Extract URLs
         urls = patterns.extract_urls(text)
         for url in urls:
             self.intelligence.add_phishing_link(url)
-            logger.info(f"Extracted URL: {url}")
+            logger.info(f"✅ Extracted URL: {url}")
+        
+        # 🆕 Extract Employee IDs
+        employee_ids = patterns.extract_employee_ids(text)
+        for emp_id in employee_ids:
+            logger.info(f"✅ Extracted Employee ID: {emp_id}")
+            # Store in keywords with prefix
+            self.intelligence.add_keyword(f"employee_id:{emp_id}")
+        
+        # 🆕 Extract Names
+        names = patterns.extract_names(text)
+        for name in names:
+            logger.info(f"✅ Extracted Name: {name}")
+            # Store in keywords with prefix
+            self.intelligence.add_keyword(f"name:{name}")
+        
+        # 🆕 Extract Addresses  
+        addresses = patterns.extract_addresses(text)
+        for address in addresses:
+            logger.info(f"✅ Extracted Address: {address}")
+            # Store in keywords with prefix
+            self.intelligence.add_keyword(f"address:{address}")
         
         # Extract suspicious keywords
         keywords = patterns.extract_keywords(text)
