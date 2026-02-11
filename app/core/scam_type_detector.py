@@ -22,13 +22,14 @@ class ScamTypeDetector:
         ],
         "credit_card": [
             "credit card", "CVV", "card number", "fraud transaction",
-            "suspicious activity", "block.*card", "card.*expir",
-            "क्रेडिट कार्ड", "debit card", "ATM"
+            "suspicious activity", "block.*card", "card.*expir", "card.*ending",
+            "क्रेडिट कार्ड", "debit card", "ATM", "verify.*card",
+            "card.*security", "fraud.*dept"  # Added more patterns
         ],
         "job": [
             "selected", "work from home", "WFH", "registration fee",
-            "joining", "HR", "interview", "employ", "salary",
-            "नौकरी", "Amazon.*job", "₹.*month"
+            "joining", "HR", "interview", "employ", "salary", "congratulations.*selected",
+            "नौकरी", "Amazon.*job", "₹.*month", "₹.*per month"
         ],
         "investment": [
             "returns", "profit", "crypto", "trading", "invest",
@@ -42,8 +43,8 @@ class ScamTypeDetector:
         ],
         "delivery": [
             "delivery", "package", "courier", "redeliver", "parcel",
-            "Amazon.*package", "tracking", "shipment", "customs",
-            "डिलीवरी", "failed.*delivery"
+            "Amazon.*package", "tracking", "shipment", "customs", "delivery.*failed",
+            "डिलीवरी", "failed.*delivery", "pay.*₹.*redeliver"  # Added more patterns
         ],
         "phishing": [
             "KYC.*expir", "update.*account", "verify.*account",

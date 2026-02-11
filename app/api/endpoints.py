@@ -117,7 +117,10 @@ async def process_message(
         logger.info(f"   - Accounts: {list(session.intelligence.bankAccounts)}")
         logger.info(f"   - UPI IDs: {list(session.intelligence.upiIds)}")
         
-        # Stage 2.3: Relevance Check (NEW! - Stop on irrelevant messages)
+        # Stage 2.3: Relevance Check (TEMPORARILY DISABLED - too aggressive)
+        # Causing false rejections for credit card & other valid scams
+        # TODO: Re-enable with better scam-type awareness
+        """
         if session.scam_detected and session.total_messages > 1:
             is_relevant, reason, confidence = relevance_detector.is_relevant(
                 scammer_message=request.message.text,
@@ -135,13 +138,15 @@ async def process_message(
                 # Mark session as complete
                 session.is_complete = True
                 session_manager.save_session_to_db(session)
-                session_manager.mark_complete(request.sessionId)
+                session_manager.schedule_cleanup(session.session_id)
                 
                 # Return graceful ending
                 return GUVISimpleResponse(
                     status="success",
                     reply=graceful_ending
                 )
+        """
+        
         
         # Stage 2.5: RL Action Selection (NEW!)
         rl_action = None
