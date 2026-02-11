@@ -17,9 +17,9 @@ URL_PATTERN = re.compile(
 )
 
 # 🆕 EMPLOYEE ID PATTERN: Extracts employee/customer IDs
-# Matches: ID 12345, employee ID: 98765, EMP12345, customer 4521
+# Matches: ID 12345, employee ID: 98765, EMP12345, employee ID is 4521
 EMPLOYEE_ID_PATTERN = re.compile(
-    r'(?:employee\s*id|emp\s*id|staff\s*id|customer\s*id|id)[\s:]+([A-Z0-9]{4,10})',
+    r'(?:employee\s*id|emp\s*id|staff\s*id|customer\s*id|id)[\s:]*(?:is\s+)?([A-Z0-9]{4,10})',
     re.IGNORECASE
 )
 
