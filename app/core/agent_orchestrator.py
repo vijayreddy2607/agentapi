@@ -130,18 +130,11 @@ class AgentOrchestrator:
         )
         
         # CRITICAL: Strip ALL emojis from response (LLM sometimes generates despite ban)
-        # Unicode emoji ranges: https://unicode.org/emoji/charts/full-emoji-list.html
-        import regex as re_emoji
-        try:
-            # Try using regex library for better emoji detection
-            emoji_pattern = re_emoji.compile(r'\p{Emoji}', re_emoji.UNICODE)
-            response = emoji_pattern.sub('', response).strip()
-        except:
-            # Fallback: strip common emojis manually
-            common_emojis = ['🙏', '😭', '😊', '😟', '😢', '😔', '😳', '🤔', '😅', '😰', '😨', '😱']
-            for emoji in common_emojis:
-                response = response.replace(emoji, '')
-            response = response.strip()
+        # Using manual list only (no external regex library)
+        common_emojis = ['🙏', '😭', '😊', '😟', '😢', '😔', '😳', '🤔', '😅', '😰', '😨', '😱']
+        for emoji in common_emojis:
+            response = response.replace(emoji, '')
+        response = response.strip()
         
         logger.info(f"✅ Final response (emoji-stripped): {response}")
         
