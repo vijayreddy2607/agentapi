@@ -24,9 +24,9 @@ EMPLOYEE_ID_PATTERN = re.compile(
 )
 
 # 🆕 NAME PATTERN: Extracts person names
-# Matches: Mera naam Rajesh Kumar hai, Name is Rohit Sharma
+# Matches: "Rajesh Kumar", "Mera naam Rajesh Kumar hai", "I am Amit Singh"
 NAME_PATTERN = re.compile(
-    r'(?:naam|name)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+    r'(?:naam|name|I am|main|mera naam)\s+(?:hai\s+)?([A-Z][a-z]+\s+[A-Z][a-z]+)|(?:Mr\.?|Mrs\.?|Ms\.?)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)',
     re.IGNORECASE
 )
 
@@ -52,9 +52,16 @@ LANDLINE_PATTERN = re.compile(r'0\d{2,4}[-\s]?\d{6,8}')
 # Matches: scammer@fake.com, support@bank.co.in
 EMAIL_PATTERN = re.compile(r'[\w.-]+@[\w.-]+\.\w+')
 
-# 🆕 PINCODE PATTERN: Extracts Indian pin codes
-# Matches: 110001, 400001, etc.
+# 🆕 PINCODE PATTERN: Extracts Indian pin codes (but NOT sequential/repeated digits)
+# Matches: 110001, 400001, etc. but NOT 123456, 111111, 987654
 PINCODE_PATTERN = re.compile(r'\b[1-9]\d{5}\b')
+
+# 🆕 DEPARTMENT HEAD PATTERN: Extracts department head/manager names
+# Matches: "department head Mr. X", "head Amit Singh", "manager Raj Sharma"
+DEPARTMENT_HEAD_PATTERN = re.compile(
+    r'(?:department\s+head|manager|supervisor|head|boss)\s+(?:Mr\.?|Mrs\.?|Ms\.?)?\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',
+    re.IGNORECASE
+)
 
 # 🆕 OFFICE/BRANCH PATTERN: Extracts office/branch mentions
 OFFICE_PATTERN = re.compile(
@@ -147,7 +154,17 @@ def extract_employee_ids(text: str) -> list[str]:
 
 def extract_names(text: str) -> list[str]:
     """🆕 Extract names from text."""
-    return NAME_PATTERN.findall(text)
+    matches = NAME_PATTERN.findall(text)
+    # Pattern has multiple groups, findall returns tuples - flatten and filter
+    names = []
+    for match in matches:
+        if isinstance(match, tuple):
+            # Get non-empty strings from tuple
+            names.extend([m for m in match if m])
+        else:
+            names.append(match)
+    return list(set(names))  # Dedupe
+
 
 
 
@@ -186,9 +203,34 @@ def extract_emails(text: str) -> list[str]:
 
 
 def extract_pincodes(text: str) -> list[str]:
-    """Extract Indian pin codes."""
+    """Extract Indian pin codes (excluding sequential/repeated patterns)."""
     matches = PINCODE_PATTERN.findall(text)
+    
+    # Filter out sequential (123456, 987654) and repeated (111111) patterns
+    valid_pincodes = []
+    for code in matches:
+        # Check if all digits are same (111111)
+        if len(set(code)) == 1:
+            continue
+        
+        # Check if sequential ascending (123456)
+        if all(int(code[i]) == int(code[i-1]) + 1 for i in range(1, len(code))):
+            continue
+        
+        # Check if sequential descending (987654)
+        if all(int(code[i]) == int(code[i-1]) - 1 for i in range(1, len(code))):
+            continue
+        
+        valid_pincodes.append(code)
+    
+    return list(set(valid_pincodes))
+
+
+def extract_department_heads(text: str) -> list[str]:
+    """Extract department head/manager names."""
+    matches = DEPARTMENT_HEAD_PATTERN.findall(text)
     return list(set(matches))
+
 
 
 def extract_keywords(text: str) -> list[str]:
