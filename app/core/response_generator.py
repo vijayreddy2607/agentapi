@@ -152,67 +152,44 @@ EXTRACTION FOCUS:
             return self.TURN_STRATEGIES["13+"]
     
     def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
-        """
-        Build system prompt for LLM with persona templates and turn strategy.
-        
-        Args:
-            persona: Persona name (e.g., "worried_persona")
-            turn_number: Current turn in conversation
-            scam_type: Type of scam detected (e.g., "bank_fraud")
-            
-        Returns:
-            System prompt string
-        """
-        persona_data = get_persona_templates(persona)
-        template_examples = get_all_templates_as_examples(persona)
+        """Build minimal prompt for natural human-like responses."""
         turn_strategy = self.get_turn_strategy(turn_number)
         
-        # Build scam context
-        scam_context = f"\nSCAM TYPE: {scam_type}\nRemember: This is a {scam_type.replace('_', ' ')} scam. Stay focused on this context!" if scam_type else ""
+        # Minimal persona description
+        persona_map = {
+            "uncle_persona": "confused elderly person, respectful (calls beta/ji), worried about pension",
+            "aunty_persona": "housewife, worried about family, mentions household things",
+            "student_persona": "college student, uses yaar/bro, casual Gen-Z style",
+            "worried_persona": "very scared, panicky, seeks help",
+            "techsavvy_student": "smart student, asks for proof, cautious",
+        }
+        persona_desc = persona_map.get(persona, "normal middle-class person")
         
-        system_prompt = f"""You are roleplaying as a potential scam victim to extract scammer info.
+        system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
 
-🎭 CHARACTER: {persona_data['name']} - {persona_data['description']}{scam_context}
-
-📍 PHASE (Turn {turn_number}): {turn_strategy['name']}
+PHASE: {turn_strategy['name']} (Turn {turn_number})
 {turn_strategy['instructions']}
 
-✍️ STYLE REFERENCE (use tone/style, NOT exact words):
-{template_examples}
+HOW TO TEXT:
+- Just type naturally like WhatsApp/SMS
+- 1 short sentence (40-80 characters max)
+- Mix Hindi/English casually
+- Use: beta, ji, yaar, arre (pick one if it fits)
+- NO quotes, NO formatting, NO extra punctuation
 
-🚨 CRITICAL RULES - READ CAREFULLY:
+EXAMPLES OF NATURAL TEXTING:
+✅ "Beta aapka ID kya hai"
+✅ "Arre number batao"
+✅ "Kyu blocked ho raha"
+✅ "Office kahan hai"
 
-1. **LENGTH IS CRITICAL**: 
-   - ONE sentence maximum (or 2 very short phrases)
-   - Target: 50-80 characters total
-   - Absolute max: 120 characters
-   - Think SMS, not essay!
+WRONG - DON'T DO THIS:
+❌ "Arre beta kya..." (no quotes!)
+❌ "Main verify karna chahta hoon" (too formal, just say "verify karunga")
+❌ Adding Matlab? Huh? ?? at end (don't do this!)
+❌ Long sentences with multiple clauses
 
-2. **BE NATURAL, NOT TEMPLATE-LIKE**:
-   - Use templates only for TONE reference
-   - Generate your own unique words
-   - Real people text short, casual messages
-
-3. **HINGLISH STYLE**:
-   - Mix English/Hindi naturally
-   - Use: beta, ji, yaar, arre (pick ONE)
-   - Keep it conversational
-
-4. **EXTRACTION (when phase requires)**:
-   - Ask for ONE thing at a time
-   - "Aapka number?" not "Can you give your number and office and..."
-   - Short, direct questions
-
-5. **EMOJI USAGE** (optional):
-   - Max 1 emoji per message
-   - Only if natural: 😰 🙏 😔
-
-EXAMPLE LENGTH:
-✅ GOOD: "Beta aapka employee ID kya hai?"
-✅ GOOD: "Arre number do, main call karunga"
-❌ TOO LONG: "Arre beta thik hai main samajh gaya lekin pehle..."
-
-Generate ONE SHORT message now (target 50-80 chars)."""
+Just text ONE short natural question or response (under 80 chars)."""
         
         return system_prompt
     
@@ -254,15 +231,13 @@ Generate ONE SHORT message now (target 50-80 chars)."""
         
         
         try:
-            # Dynamic temperature for variety (higher = more creative/varied)
-            # Turn 1-2: Lower temp (0.7) - more predictable
-            # Turn 3+: Higher temp (0.9-1.0) - more variety
+            # Higher temperature for natural human-like variation
             if turn_number <= 2:
-                temperature = 0.7
+                temperature = 0.9  # Natural curiosity
             elif turn_number <= 5:
-                temperature = 0.85
+                temperature = 1.0  # Natural confusion/questions
             else:
-                temperature = 0.95  # High variety for later turns
+                temperature = 1.1  # Very natural, casual responses
             
             # CRITICAL: 3.5s timeout to keep total response < 5s for competition
             # This leaves 1-1.5s buffer for scam detection + processing
