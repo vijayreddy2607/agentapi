@@ -90,9 +90,7 @@ class IntelligenceExtractor:
         for keyword in keywords:
             self.intelligence.add_keyword(keyword)
         
-        # 🧹 DEDUPLICATE keywords before returning
-        # FIXED: Use suspiciousKeywords (correct Pydantic field name)
-        self.intelligence.suspiciousKeywords = list(set(self.intelligence.suspiciousKeywords))
+        # Sets are already deduplicated by nature - no need to convert
         
         return self.intelligence
     
