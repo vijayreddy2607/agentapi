@@ -4,9 +4,9 @@ import re
 # UPI ID Pattern: word@word (e.g., scammer@paytm, user@ybl)
 UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 
-# Bank Account Pattern: 10-18 digits (more aggressive - includes 10 digit for competition)
-# Matches: 1234567890123456, 1234-5678-9012, account 123456789012
-BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{10,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})\b')
+# Bank Account Pattern: 11-18 digits ONLY (exclude 10-digit phone numbers!)
+# Matches: 1234567890123456, 12345678901, 1234-5678-9012-3456
+BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{11,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})\b')
 
 # Phone Number Pattern: Indian phone numbers (various formats)
 PHONE_PATTERN = re.compile(r'(\+?91[-\s]?[6-9]\d{9}|\b[6-9]\d{9}\b)')
@@ -30,16 +30,17 @@ NAME_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# 🆕 ADDRESS PATTERN: Extracts addresses (aggressive)
-# Matches: "123, MG Road", "2nd floor, Tower B", "12/3, MG Road, Delhi"
+# 🆕 ADDRESS PATTERN: Extracts addresses (more flexible!)
+# Matches: "123, MG Road", "XYZ Road, Andheri", "2nd floor, Tower B, Mumbai"
 ADDRESS_PATTERN = re.compile(
-    r'(\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|St|Street|Avenue|Floor|Tower|Building|Complex|Mall)[,\s]+[A-Za-z\s]+)',
+    r'(\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|St|Street|Avenue|Floor|Tower|Building|Complex|Mall)[,\s]+[A-Za-z\s]+|'
+    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s,]+)',
     re.IGNORECASE
 )
 
 # 🆕 OFFICE/BRANCH PATTERN: Extracts office/branch mentions
 OFFICE_PATTERN = re.compile(
-    r'((?:Main|Head|Branch)\s+(?:Office|Branch)[,\s]+[A-Za-z0-9\s,/-]+)',
+    r'((?:Main|Head|Branch|Andheri|Bandra|Mumbai)\s+(?:Office|Branch|West|East)[,\s]*[A-Za-z0-9\s,/-]*)',
     re.IGNORECASE
 )
 
@@ -85,10 +86,20 @@ def extract_upi_ids(text: str) -> list[str]:
 
 
 def extract_bank_accounts(text: str) -> list[str]:
-    """Extract bank account numbers from text (aggressive for competition)."""
+    """Extract bank account numbers from text (exclude phone numbers!)."""
     matches = BANK_ACCOUNT_PATTERN.findall(text)
-    # Filter: must be at least 10 digits to avoid short numbers
-    return [m for m in matches if len(re.sub(r'[-\s]', '', m)) >= 10]
+    # Filter out phone numbers:
+    # - Must be at least 11 digits (not 10-digit phone)
+    # - If exactly 10 digits, must NOT start with 6-9 (Indian phone pattern)
+    filtered = []
+    for m in matches:
+        clean = re.sub(r'[-\s]', '', m)
+        if len(clean) >= 11:
+            filtered.append(m)
+        elif len(clean) == 10 and not clean[0] in '6789':
+            # 10-digit number that doesn't look like phone
+            filtered.append(m)
+    return filtered
 
 
 def extract_phone_numbers(text: str) -> list[str]:
