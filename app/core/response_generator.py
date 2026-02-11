@@ -22,70 +22,87 @@ class ResponseGenerator:
     Generate contextual responses using LLM with persona templates as style guides.
     """
     
-    # Turn-based strategy instructions
+    # Turn-based strategy instructions with progressive engagement
     TURN_STRATEGIES = {
         "1-2": {
-            "name": "BUILD TRUST",
+            "name": "CURIOSITY + BELIEF",
             "instructions": """
-You must respond as if you BELIEVE the scammer completely.
-- Show fear, excitement, or confusion (depending on persona)
-- Act vulnerable and naive
-- Express emotional reaction
-- Ask simple clarifying questions
-- DO NOT be suspicious or challenging
-- Make the scammer think you are an easy target
+PHASE 1: Show GENUINE curiosity and belief. Make scammer feel successful.
+- Express appropriate emotion (fear for threats, excitement for prizes, concern for warnings)
+- Ask 1-2 clarifying questions that show you believe them
+- Use natural reactions based on persona
+- DO NOT be suspicious yet - you're a naive victim
+- Make it conversational, not interrogative
+
+EXTRACTION FOCUS: None yet - just establish rapport
 """
         },
         
-        "3-6": {
-            "name": "ASK QUESTIONS",
+        "3-5": {
+            "name": "CONFUSION + VERIFICATION",
             "instructions": """
-You have trust established. Now show confusion and ask questions.
-- Ask for more details about the situation
-- Express concern about the issue
-- Show willingness to cooperate
-- Ask "what should I do?"
-- Mention family/money concerns
-- Stay in character with your persona
+PHASE 2: Show confusion but willingness to help. Start subtle verification.
+- Express confusion about specific details
+- Ask for verification in a NATURAL way: "Which office are you calling from?", "What's your employee ID beta?"
+- Mention you want to verify before proceeding (not suspicious, just careful)
+- Show willingness to cooperate if verified
+- Mix in persona-specific concerns (family, money, technical difficulty)
+
+EXTRACTION FOCUS: 
+- Office/company details
+- Employee ID or badge number  
+- Department/branch information
 """
         },
         
-        "7-9": {
-            "name": "REVERSE EXTRACTION",
+        "6-9": {
+            "name": "PROACTIVE EXTRACTION",
             "instructions": """
-CRITICAL: You must now extract the SCAMMER'S information. Act very eager to help/pay.
-- Say you want to call them back - ask for their phone number
-- Say you will transfer money - ask for their UPI ID / account number
-- Ask for their office address or ID proof
-- Say you will file complaint - ask their badge/employee number
-- Act ready to cooperate - but need THEIR details first
-- Be persistent but natural about getting their info
+PHASE 3: Act EAGER to comply but need their details to proceed. This is CRITICAL.
+- "I want to call you back to confirm - what's your direct number?"
+- "I'll transfer the money right now - what's your UPI ID/account number?"  
+- "Let me note down your details - office address for my reference?"
+- "My family will ask who I sent money to - give me your full details"
+- Be PERSISTENT but natural - "Beta I need this for my records"
+
+EXTRACTION FOCUS (ASK FOR ALL):
+- Callback phone number
+- UPI ID or bank account number
+- Office address
+- Full name and employee ID
+- Any reference numbers or case IDs
 """
         },
         
-        "10+": {
-            "name": "KEEP ENGAGED",
+        "10-12": {
+            "name": "TECHNICAL DELAYS",
             "instructions": """
-Keep the scammer engaged with excuses and delays.
-- Say you are trying to arrange money
-- Technical issues (bank app not working, OTP not coming)
-- Need to ask family member
-- Will do it tomorrow/evening
-- Ask more questions
-- Keep conversation going to waste scammer's time
+PHASE 4: Create delays with technical issues while staying engaged.
+- "App is not working beta... showing error... what to do?"
+- "OTP is not coming... network problem maybe?"
+- "Bank website is slow... can we try tomorrow morning?"
+- Ask them to send details via SMS/email as backup
+- Keep promising action but delay with genuine-sounding issues
+
+EXTRACTION FOCUS: 
+- Ask for their contact details "in case call drops"
+- Request alternative payment methods (more chances to extract UPI/account)
 """
         },
         
-        "10+": {
-            "name": "KEEP ENGAGED",
+        "13+": {
+            "name": "STRATEGIC STALLING",
             "instructions": """
-Keep the scammer engaged with excuses and delays.
-- Say you are trying to arrange money
-- Technical issues (bank app not working, OTP not coming)
-- Need to ask family member
-- Will do it tomorrow/evening
-- Ask more questions
-- Keep conversation going to waste scammer's time
+PHASE 5: Maximum time-wasting while keeping hope alive.
+- "Family member is coming home soon, will ask them to help"
+- "Internet banking locked, will go to branch tomorrow"
+- "Let me arrange money by evening"
+- RE-ASK for their details (memory issues) - "Sorry beta, what was your number again?"
+- Show continued willingness but always delay
+
+EXTRACTION FOCUS: 
+- Re-confirm all previously asked details (memory excuse)
+- Ask for supervisor's contact (escalation excuse)
 """
         }
     }
@@ -122,15 +139,17 @@ Keep the scammer engaged with excuses and delays.
         logger.info("ResponseGenerator initialized with Groq LLM")
     
     def get_turn_strategy(self, turn_number: int) -> dict:
-        """Get strategy for current turn number."""
+        """Get strategy for current turn number with progressive engagement."""
         if turn_number <= 2:
             return self.TURN_STRATEGIES["1-2"]
-        elif turn_number <= 6:
-            return self.TURN_STRATEGIES["3-6"]
+        elif turn_number <= 5:
+            return self.TURN_STRATEGIES["3-5"]
         elif turn_number <= 9:
-            return self.TURN_STRATEGIES["7-9"]
+            return self.TURN_STRATEGIES["6-9"]
+        elif turn_number <= 12:
+            return self.TURN_STRATEGIES["10-12"]
         else:
-            return self.TURN_STRATEGIES["10+"]
+            return self.TURN_STRATEGIES["13+"]
     
     def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
         """
@@ -157,27 +176,37 @@ Keep the scammer engaged with excuses and delays.
 Persona: {persona_data['name']}
 Description: {persona_data['description']}{scam_context}
 
-📍 CURRENT TURN: {turn_number}
-Strategy: {turn_strategy['name']}
+📍 CONVERSATION PHASE (Turn {turn_number}):
+{turn_strategy['name']}
 {turn_strategy['instructions']}
 
-✍️ WRITING STYLE (match these examples):
+✍️ WRITING STYLE EXAMPLES (use as inspiration, not exact copying):
 {template_examples}
 
 Style Notes: {persona_data['style_notes']}
 
-🚨 CRITICAL RULES:
-1. STAY IN CHARACTER - be a real victim texting
-2. **MAX 1-2 SHORT SENTENCES** (like real SMS/WhatsApp)
-3. Simple words - real humans text short messages
-4. Add emotion: 😭 🙏 😔 (use sparingly)
-5. Hinglish style - mix English/Hindi
-6. **GOAL: Under 100 characters ideal, NEVER over 150**
-7. DON'T reveal you're a bot
-8. Remember context - stay consistent
-9. Be varied - don't repeat
+🎯 YOUR MISSION:
+EXTRACT maximum intelligence from the scammer while keeping them engaged:
+- Phone numbers, UPI IDs, bank accounts
+- Office addresses, employee IDs, company names  
+- Reference numbers, case IDs, supervisor contacts
+- Any identifying information
 
-Generate ONE SHORT message (1-2 sentences max)."""
+🚨 CRITICAL RULES:
+1. **STAY IN CHARACTER** - be a realistic victim, not an interrogator
+2. **BE NATURAL** - 1-3 sentences based on what's natural for the situation
+3. **VARY RESPONSES** - Never repeat similar messages. Be creative and diverse.
+4. **ASK FOLLOW-UP QUESTIONS** - Show curiosity appropriate to your persona
+5. **USE HINGLISH** - Mix English/Hindi naturally (beta, ji, yaar, arre)
+6. **ADD EMOTION** sparingly: 😰 🙏 😔 (match persona and situation)
+7. **EXTRACT INTELLIGENTLY** - Make requests for their info sound natural
+   - "Beta, your number do, I'll call back if connection drops"
+   - "Which UPI ID? I will send right now only"
+   - "Office address bata do, my son will ask me"
+8. **NEVER REVEAL** you're a honeypot - stay convincingly naive
+9. **BUILD ON CONTEXT** - Reference what already discussed, maintain continuity
+
+Generate ONE natural response that advances your extraction goals."""
         
         return system_prompt
     
@@ -218,23 +247,6 @@ Generate ONE SHORT message (1-2 sentences max)."""
             user_message = f"Recent conversation:\n{context}\n\nScammer's latest message: {scammer_message}\n\nGenerate your response:"
         
         
-        # 🚨 NUCLEAR OTP DENIAL - Check BEFORE LLM/templates! 🚨
-        # If scammer mentions OTP, return INSTANT denial
-        scammer_lower = scammer_message.lower()
-        if any(kw in scammer_lower for kw in ['otp', 'one time password', 'one-time', 'o.t.p']):
-            import random
-            denials = [
-                "What OTP beta? I didnt get any SMS",
-                "OTP? Maine koi msg nahi dekha",
-                "Which OTP? No message came",
-                "OTP matlab? Koi SMS nahi aaya",
-                "Beta koi OTP nahi aaya, network problem?",
-                "What OTP u talking? I dont see any msg"
-            ]
-            denial = random.choice(denials)
-            logger.warning(f"🚫 OTP DETECTED - FORCING DENIAL: {denial}")
-            return denial
-        
         try:
             # Dynamic temperature for variety (higher = more creative/varied)
             # Turn 1-2: Lower temp (0.7) - more predictable
@@ -246,26 +258,73 @@ Generate ONE SHORT message (1-2 sentences max)."""
             else:
                 temperature = 0.95  # High variety for later turns
             
-            # CRITICAL: 6s timeout to ensure LLM has enough time
-            # Previous 4s timeout was too short, causing template fallback
+            # CRITICAL: 3.5s timeout to keep total response < 5s for competition
+            # This leaves 1-1.5s buffer for scam detection + processing
             import asyncio
             response = await asyncio.wait_for(
                 self.llm_client.generate_response(
                     system_prompt=system_prompt,
                     user_message=user_message,
                     temperature=temperature,
-                    max_tokens=60  # Increased from 40 for complete responses
+                    max_tokens=50  # Optimized for speed while maintaining quality
                 ),
-                timeout=6.0  # 6s max for LLM - no more premature fallback!
+                timeout=3.5  # Fast response for competition (total API < 5s)
             )
+            
+            # 🚨 SMART OTP SAFETY: Only override if sharing actual digits/codes 🚨
+            response_lower = response.lower()
+            
+            # Check if response contains actual OTP digits (6-digit codes) or explicit sharing
+            import re
+            has_otp_digits = bool(re.search(r'\b\d{6}\b', response))  # 6-digit codes
+            has_otp_sharing = any(phrase in response_lower for phrase in [
+                'otp is', 'otp code', 'the otp', 'my otp',
+                'otp:', 'code:', 'code is', 'here is'
+            ])
+            
+            # Only override if actually trying to SHARE an OTP
+            if has_otp_digits or has_otp_sharing:
+                import random
+                # Persona-specific varied denials
+                if 'uncle' in persona.lower():
+                    denials = [
+                        "Beta, I'm checking my phone... no OTP message came yet. Your system sent it?",
+                        "Arre, my message box is empty. OTP kahan hai? Maybe delayed?",
+                        "Wait beta, let me check SMS... no nothing from bank. Send again?",
+                        "OTP nahi aaya abhi tak. My phone network is slow sometimes...",
+                    ]
+                elif 'aunty' in persona.lower():
+                    denials = [
+                        "Arre beta, I don't see any message! My phone is working or not?",
+                        "No SMS came ji! Should I restart my phone?",
+                        "Beta OTP kidhar hai? I checked all messages, nothing...",
+                        "Wait let me ask my bahu... she says no message came..."
+                    ]
+                elif 'student' in persona.lower():
+                    denials = [
+                        "Bro no OTP in my inbox... server issue hai kya?",
+                        "Not getting any code yaar... resend kar do?",
+                        "Check karke no message came... network problem maybe?",
+                        "Nahi aaya yaar... spam folder me bhi nahi hai..."
+                    ]
+                else:
+                    denials = [
+                        "I'm not seeing any OTP message... can you resend?",
+                        "No message came yet... where should I check?",
+                        "Checking my phone... no OTP here... send again?",
+                        "Still waiting for the code... hasn't arrived yet..."
+                    ]
+                
+                response = random.choice(denials)
+                logger.warning(f"🚫 BLOCKED OTP SHARING ATTEMPT - Safe denial used")
             
             logger.info(f"✅ LLM response generated in <4s: {response[:100]}...")
             return response
             
         except asyncio.TimeoutError:
-            logger.error(f"⏱️ LLM timeout after 6s - RARE! Returning safe denial")
-            # NO TEMPLATES - just return safe denial
-            return "Beta main confuse hoon... Mujhe thoda time do, samajh nahi aa raha"
+            logger.error(f"⏱️ LLM timeout after 3.5s - Returning fast fallback")
+            # Fast fallback for competition speed
+            return "Beta samjhao properly... main confuse ho gaya"
             
         except Exception as e:
             logger.error(f"❌ LLM error: {e} - Returning safe response")
