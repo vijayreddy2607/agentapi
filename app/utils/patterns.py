@@ -30,12 +30,12 @@ NAME_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# 🆕 ADDRESS PATTERN: Extracts addresses (handles floor numbers!)
-# Matches: "123, MG Road", "5th floor, ABC Building", "XYZ Road, Andheri"
+# 🆕 ADDRESS PATTERN: Extracts addresses (precise, not greedy!)
+# Matches: "123, MG Road", "5th floor, ABC Building, Mumbai", "12th Floor, XYZ Building, Andheri"
 ADDRESS_PATTERN = re.compile(
-    r'(\d+(?:st|nd|rd|th)?\s+(?:floor|Floor)[,\s]+[A-Za-z\s]+(?:Building|Tower|Complex|Mall)[,\s]+[A-Za-z\s]+|'  # 5th floor, ABC Building
-    r'\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|St|Street|Avenue|Floor|Tower|Building|Complex|Mall)[,\s]+[A-Za-z\s]+|'  # 123, MG Road
-    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s,]+)',  # XYZ Road, Andheri
+    r'(\d+(?:st|nd|rd|th)?\s+(?:floor|Floor)[,\s]+[A-Za-z\s]+(?:Building|Tower|Complex)[,\s]+[A-Za-z\s]{3,20}(?:Mumbai|Delhi|Bangalore|Chennai|Kolkata|Pune|East|West|North|South)?|'  # 5th floor, ABC Building, Mumbai
+    r'\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|Street|Avenue)[,\s]+[A-Za-z\s]{3,20}(?:Mumbai|Delhi|Bangalore|Chennai|Kolkata|Pune)?|'  # 123, MG Road, Mumbai
+    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s]{3,20}(?:West|East|Mumbai|Delhi)?)',  # XYZ Road, Andheri West
     re.IGNORECASE
 )
 
