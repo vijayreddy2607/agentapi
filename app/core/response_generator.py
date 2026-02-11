@@ -39,54 +39,57 @@ EXTRACTION FOCUS: None yet - just establish rapport
         },
         
         "3-5": {
-            "name": "CONFUSION + VERIFICATION",
+            "name": "CONFUSED QUESTIONING + UPI EXTRACTION",
             "instructions": """
-PHASE 2: Show confusion but willingness to help. Start subtle verification.
-- Express confusion about specific details
-- Ask for verification in a NATURAL way: "Which office are you calling from?", "What's your employee ID beta?"
-- Mention you want to verify before proceeding (not suspicious, just careful)
-- Show willingness to cooperate if verified
-- Mix in persona-specific concerns (family, money, technical difficulty)
+PHASE 2: Show confusion and extract DIGITAL IDs.
+- "Kaise compromised hua? PIN safe toh hai?"
+- "Account number confirm kar doon ji?"
+- "UPI ID kya hai verification ke liye?"
+- "Verification link ya QR code bhejo?"
+- "Payment gateway ka email kya hai?"
 
-EXTRACTION FOCUS: 
-- Office/company details
-- Employee ID or badge number  
-- Department/branch information
+EXTRACTION FOCUS:
+- ✅ UPI IDs: "Aapka UPI ID kya hai confirm ke liye?"
+- ✅ Links: "Verification link bhejo confirmation ke liye"
+- ✅ Emails: "Email pe confirmation message bhej sakte ho?"
 """
         },
         
         "6-9": {
-            "name": "PROACTIVE EXTRACTION",
+            "name": "IDENTITY & MULTIPLES EXTRACTION",
             "instructions": """
-PHASE 3: Act EAGER to comply but need their details to proceed. This is CRITICAL.
-- "I want to call you back to confirm - what's your direct number?"
-- "I'll transfer the money right now - what's your UPI ID/account number?"  
-- "Let me note down your details - office address for my reference?"
-- "My family will ask who I sent money to - give me your full details"
-- Be PERSISTENT but natural - "Beta I need this for my records"
+PHASE 3: Extract scammer IDENTITY & ask for MULTIPLES.
+- "Aapka employee ID aur naam kya hai?"
+- "Department head ka naam batao?"
+- "Company registration number kya hai?"
+- "Office ka full address do, pin code ke saath?"
+- "Landline number kya hai office ka?"
+- "Backup contact number? Emergency case ke liye?"
 
-EXTRACTION FOCUS (ASK FOR ALL):
-- Callback phone number
-- UPI ID or bank account number
-- Office address
-- Full name and employee ID
-- Any reference numbers or case IDs
+EXTRACTION FOCUS:
+- ✅ Employee ID + Name: "ID aur full name batao"
+- ✅ Multiple phones: "Backup number bhi de do ji"
+- ✅ Landline: "Office landline kya hai?"
+- ✅ Address + Pincode: "Pin code kya hai? Landmark?"
 """
         },
         
         "10-12": {
-            "name": "TECHNICAL DELAYS",
+            "name": "LOCATION & SUPERVISOR EXTRACTION",
             "instructions": """
-PHASE 4: Create delays with technical issues while staying engaged.
-- "App is not working beta... showing error... what to do?"
-- "OTP is not coming... network problem maybe?"
-- "Bank website is slow... can we try tomorrow morning?"
-- Ask them to send details via SMS/email as backup
-- Keep promising action but delay with genuine-sounding issues
+PHASE 4: Extract LOCATION details & supervisor hierarchy.
+- "Aapka branch exact kahan hai?"
+- "Supervisor ka naam aur number kya hai?"
+- "Local WhatsApp number hai kya office ka?"
+- "Email ID kya hai complaint ke liye?"
+- "Pin code confirm kar doon location ka?"
+- "Nearest landmark kya hai branch ke paas?"
 
-EXTRACTION FOCUS: 
-- Ask for their contact details "in case call drops"
-- Request alternative payment methods (more chances to extract UPI/account)
+EXTRACTION FOCUS:
+- ✅ Supervisor details: "Boss ka naam aur number?"
+- ✅ WhatsApp number: "WhatsApp pe baat kar sakte hain?"
+- ✅ Pin codes: "Area ka pin code kya hai?"
+- ✅ Landmarks: "Nearest landmark batao"
 """
         },
         
