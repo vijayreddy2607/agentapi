@@ -84,6 +84,12 @@ class IntelligenceExtractor:
         for pincode in pincodes:
             logger.info(f"✅ Extracted Pin Code: {pincode}")
             self.intelligence.add_keyword(f"pincode:{pincode}")
+        
+        # 🆕 Extract Department Heads
+        dept_heads = patterns.extract_department_heads(text)
+        for head in dept_heads:
+            logger.info(f"✅ Extracted Department Head: {head}")
+            self.intelligence.add_keyword(f"dept_head:{head}")
        
         # Extract suspicious keywords
         keywords = patterns.extract_keywords(text)
