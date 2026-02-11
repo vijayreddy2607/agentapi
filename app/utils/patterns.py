@@ -23,18 +23,19 @@ EMPLOYEE_ID_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# 🆕 NAME PATTERN: Extracts names (especially after "name is", "naam hai")
-# Matches: "Mera naam Rajesh Kumar hai", "Name is Rohit Kumar", "my name Amit"
+# 🆕 NAME PATTERN: Extracts names (including titles like Mr./Mrs./Ms.)
+# Matches: "Mera naam Mr. Rajesh Kumar hai", "Name is Rohit Kumar", "my name Amit"
 NAME_PATTERN = re.compile(
-    r'(?:name|naam)(?:\s+is|\s+hai)?[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})',
+    r'(?:name|naam)(?:\s+is|\s+hai)?[\s:]+(?:Mr\.?|Mrs\.?|Ms\.?|Dr\.?)?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})',
     re.IGNORECASE
 )
 
-# 🆕 ADDRESS PATTERN: Extracts addresses (more flexible!)
-# Matches: "123, MG Road", "XYZ Road, Andheri", "2nd floor, Tower B, Mumbai"
+# 🆕 ADDRESS PATTERN: Extracts addresses (handles floor numbers!)
+# Matches: "123, MG Road", "5th floor, ABC Building", "XYZ Road, Andheri"
 ADDRESS_PATTERN = re.compile(
-    r'(\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|St|Street|Avenue|Floor|Tower|Building|Complex|Mall)[,\s]+[A-Za-z\s]+|'
-    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s,]+)',
+    r'(\d+(?:st|nd|rd|th)?\s+(?:floor|Floor)[,\s]+[A-Za-z\s]+(?:Building|Tower|Complex|Mall)[,\s]+[A-Za-z\s]+|'  # 5th floor, ABC Building
+    r'\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|St|Street|Avenue|Floor|Tower|Building|Complex|Mall)[,\s]+[A-Za-z\s]+|'  # 123, MG Road
+    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s,]+)',  # XYZ Road, Andheri
     re.IGNORECASE
 )
 
