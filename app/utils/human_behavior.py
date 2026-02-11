@@ -106,20 +106,6 @@ class HumanBehavior:
         return text
     
     def add_repetitions(self, text: str) -> str:
-        """Add word repetitions like 'wait wait' or 'achha achha'."""
-        if random.random() > 0.10:  # 10% chance
-            return text
-        
-        # Common repeatable words
-        repeatable_words = ["wait", "okay", "achha", "haan", "no", "yes", "what"]
-        
-        for word in repeatable_words:
-            pattern = r'\b' + word + r'\b'
-            if re.search(pattern, text, re.IGNORECASE):
-                # Repeat it 2x
-                text = re.sub(pattern, f"{word} {word}", text, count=1, flags=re.IGNORECASE)
-                break
-        
         return text
     
     def add_hesitation(self, text: str) -> str:
@@ -141,6 +127,27 @@ class HumanBehavior:
         # 
         # return text
     
+    def add_emotional_marker(self, text: str) -> str:
+        """Add emotional markers like Huh? or Matlab? at the end."""
+        # DISABLED FOR COMPETITION: These reduce conversation quality score
+        # Markers like "Huh?", "Matlab?", "Well" make responses feel unnatural
+        # LLM already generates appropriate emotional tone
+        return text  # Return unchanged
+        
+        # OLD CODE (disabled):
+        # if random.random() > 0.12:  # 12% chance
+        #     return text
+        # 
+        # marker = random.choice(self.EMOTIONAL_MARKERS)
+        # 
+        # # Add at end if doesn't already have one
+        # if not any(text.endswith(m) for m in self.EMOTIONAL_MARKERS):
+        #     # Remove existing punctuation at end
+        #     text = text.rstrip('.,!?')
+        #     text = f"{text} {marker}"
+        # 
+        # return text
+    
     def remove_some_punctuation(self, text: str) -> str:
         """Remove some punctuation to seem more casual."""
         if random.random() > 0.20:  # 20% chance
@@ -156,11 +163,6 @@ class HumanBehavior:
         
         return text
     
-    def add_emotional_marker(self, text: str, emotion: str = None) -> str:
-        """Add emotional markers like '!!' or '??'."""
-        if emotion is None:
-            # Detect emotion from text
-            if any(word in text.lower() for word in ["wow", "great", "awesome", "nice"]):
                 emotion = "excited"
             elif "?" in text:
                 emotion = "confused"
