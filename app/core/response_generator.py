@@ -241,6 +241,8 @@ Just text ONE short natural question or response (under 80 chars)."""
             
             # CRITICAL: 3.5s timeout to keep total response < 5s for competition
             # This leaves 1-1.5s buffer for scam detection + processing
+            # Try LLM with increased timeout for better variety
+            # Competition allows 5s - use 4.8s to ensure LLM completes
             import asyncio
             response = await asyncio.wait_for(
                 self.llm_client.generate_response(
@@ -249,7 +251,7 @@ Just text ONE short natural question or response (under 80 chars)."""
                     temperature=temperature,
                     max_tokens=35  # SHORT responses for competition (50-80 chars target)
                 ),
-                timeout=3.5  # Fast response for competition (total API < 5s)
+                timeout=4.8  # Increased from 3.5s - allows more natural LLM responses
             )
             
             # 🚨 SMART OTP SAFETY: Only override if sharing actual digits/codes 🚨
