@@ -67,10 +67,31 @@ class IntelligenceExtractor:
             # Store in keywords with prefix
             self.intelligence.add_keyword(f"address:{address}")
         
+        # 🆕 Extract Landlines
+        landlines = patterns.extract_landlines(text)
+        for landline in landlines:
+            logger.info(f"✅ Extracted Landline: {landline}")
+            self.intelligence.add_phone_number(landline)  # Add as phone number
+        
+        # 🆕 Extract Emails
+        emails = patterns.extract_emails(text)
+        for email in emails:
+            logger.info(f"✅ Extracted Email: {email}")
+            self.intelligence.add_keyword(f"email:{email}")
+        
+        # 🆕 Extract Pin Codes
+        pincodes = patterns.extract_pincodes(text)
+        for pincode in pincodes:
+            logger.info(f"✅ Extracted Pin Code: {pincode}")
+            self.intelligence.add_keyword(f"pincode:{pincode}")
+       
         # Extract suspicious keywords
         keywords = patterns.extract_keywords(text)
         for keyword in keywords:
             self.intelligence.add_keyword(keyword)
+        
+        # 🧹 DEDUPLICATE keywords before returning
+        self.intelligence.keywords = list(set(self.intelligence.keywords))
         
         return self.intelligence
     

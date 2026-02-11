@@ -23,21 +23,38 @@ EMPLOYEE_ID_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# 🆕 NAME PATTERN: Extracts names (including titles like Mr./Mrs./Ms.)
-# Matches: "Mera naam Mr. Rajesh Kumar hai", "Name is Rohit Kumar", "my name Amit"
+# 🆕 NAME PATTERN: Extracts person names
+# Matches: Mera naam Rajesh Kumar hai, Name is Rohit Sharma
 NAME_PATTERN = re.compile(
-    r'(?:name|naam)(?:\s+is|\s+hai)?[\s:]+(?:Mr\.?|Mrs\.?|Ms\.?|Dr\.?)?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})',
+    r'(?:naam|name)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
     re.IGNORECASE
 )
 
-# 🆕 ADDRESS PATTERN: Extracts addresses (precise, not greedy!)
-# Matches: "123, MG Road", "5th floor, ABC Building, Mumbai", "12th Floor, XYZ Building, Andheri"
+# 🆕 ADDRESS PATTERN: Extracts physical addresses
+# Matches: 123 MG Road, 12/3 Sector 5, Plot No. 12, XYZ सिटी के मुख्य बाजार में
 ADDRESS_PATTERN = re.compile(
-    r'(\d+(?:st|nd|rd|th)?\s+(?:floor|Floor)[,\s]+[A-Za-z\s]+(?:Building|Tower|Complex)[,\s]+[A-Za-z\s]{3,20}(?:Mumbai|Delhi|Bangalore|Chennai|Kolkata|Pune|East|West|North|South)?|'  # 5th floor, ABC Building, Mumbai
-    r'\d+[/-]?\d*,?\s+[A-Za-z\s]+(?:Road|Street|Avenue)[,\s]+[A-Za-z\s]{3,20}(?:Mumbai|Delhi|Bangalore|Chennai|Kolkata|Pune)?|'  # 123, MG Road, Mumbai
-    r'[A-Z][A-Za-z]+\s+(?:Road|Street|Avenue)[,\s]+[A-Z][A-Za-z\s]{3,20}(?:West|East|Mumbai|Delhi)?)',  # XYZ Road, Andheri West
+    r'(\d+[/-]?\d*,?\s+[A-Z][A-Za-z\s]+(?:Road|Street|Sector|Plot|Floor|Building|Branch)[,\s]+[A-Za-z\s]+)',
     re.IGNORECASE
 )
+
+# 🆕 HINDI ADDRESS PATTERN: Extracts Hindi/Devanagari addresses
+# Matches: XYZ सिटी के मुख्य बाजार में, दिल्ली के कनॉट प्लेस में
+HINDI_ADDRESS_PATTERN = re.compile(
+    r'([\u0900-\u097F\w\s]+(?:सिटी|बाजार|रोड|मार्ग|नगर|इलाका|क्षेत्र)[,\s]*[\u0900-\u097F\w\s]*)',
+    re.IGNORECASE
+)
+
+# 🆕 LANDLINE PATTERN: Extracts landline numbers
+# Matches: 022-12345678, 011-1234567, 0XXX-XXXXXXX
+LANDLINE_PATTERN = re.compile(r'0\d{2,4}[-\s]?\d{6,8}')
+
+# 🆕 EMAIL PATTERN: Extracts email addresses
+# Matches: scammer@fake.com, support@bank.co.in
+EMAIL_PATTERN = re.compile(r'[\w.-]+@[\w.-]+\.\w+')
+
+# 🆕 PINCODE PATTERN: Extracts Indian pin codes
+# Matches: 110001, 400001, etc.
+PINCODE_PATTERN = re.compile(r'\b[1-9]\d{5}\b')
 
 # 🆕 OFFICE/BRANCH PATTERN: Extracts office/branch mentions
 OFFICE_PATTERN = re.compile(
@@ -133,11 +150,45 @@ def extract_names(text: str) -> list[str]:
     return NAME_PATTERN.findall(text)
 
 
+
 def extract_addresses(text: str) -> list[str]:
-    """🆕 Extract addresses from text."""
-    addresses = ADDRESS_PATTERN.findall(text)
+    """🆕 Extract physical addresses from text (English and Hindi)."""
+    addresses = []
+    
+    # English addresses
+    addresses.extend(ADDRESS_PATTERN.findall(text))
+    
+    # Hindi addresses
+    hindi_matches = HINDI_ADDRESS_PATTERN.findall(text)
+    addresses.extend(hindi_matches)
+    
+    # Office patterns
     offices = OFFICE_PATTERN.findall(text)
-    return list(set(addresses + offices))
+    addresses.extend(offices)
+    
+    # Clean and dedupe
+    cleaned = [addr.strip() for addr in addresses if len(addr.strip()) > 10]
+    return list(set(cleaned))
+
+
+def extract_landlines(text: str) -> list[str]:
+    """Extract landline numbers."""
+    matches = LANDLINE_PATTERN.findall(text)
+    return list(set(matches))
+
+
+def extract_emails(text: str) -> list[str]:
+    """Extract email addresses."""
+    matches = EMAIL_PATTERN.findall(text)
+    # Filter out UPI IDs (they use @bank format)
+    emails = [m for m in matches if not any(bank in m.lower() for bank in ['paytm', 'ybl', 'upi', 'oksbi', 'okaxis'])]
+    return list(set(emails))
+
+
+def extract_pincodes(text: str) -> list[str]:
+    """Extract Indian pin codes."""
+    matches = PINCODE_PATTERN.findall(text)
+    return list(set(matches))
 
 
 def extract_keywords(text: str) -> list[str]:
