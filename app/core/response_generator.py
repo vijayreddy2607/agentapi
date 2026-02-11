@@ -254,20 +254,6 @@ Generate ONE SHORT message (1-2 sentences max)."""
             # NO TEMPLATES - just return safe questioning
             return "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
 
-                # Use one of the first 2 templates (Intro)
-                import random
-                fallback = templates[random.randint(0, min(1, len(templates)-1))]
-            else:
-                # Use mid-conversation templates (indices 2-16 approx)
-                # Ensure we don't go out of bounds
-                import random
-                start_idx = 2
-                end_idx = min(16, len(templates)-1)
-                if start_idx <= end_idx:
-                    fallback = templates[random.randint(start_idx, end_idx)]
-                else:
-                    fallback = templates[0]
-            
             logger.info(f"Using fallback template (Turn {turn_number})")
             return fallback
     
