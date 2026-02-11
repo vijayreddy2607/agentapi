@@ -79,6 +79,12 @@ async def process_message(
             session.scam_detected = scam_result.is_scam
             session.scam_type = scam_result.scam_type
             
+            # 🆕 DETECT SPECIFIC SCAM CATEGORY for persona adaptation
+            from app.core.scam_type_detector import scam_detector as type_detector
+            detected_category = type_detector.detect(request.message.text)
+            session.scam_type = detected_category  # Override with specific category
+            logger.info(f"🎯 Scam category detected: {detected_category}")
+            
             if not scam_result.is_scam:
                 logger.info("No scam detected - returning standard response")
                 # Fix: Return GUVISimpleResponse instead of MessageResponse
