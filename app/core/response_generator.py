@@ -299,6 +299,9 @@ Just text ONE short natural question or response (under 80 chars)."""
                 response = random.choice(denials)
                 logger.warning(f"🚫 BLOCKED OTP SHARING ATTEMPT - Safe denial used")
             
+            #🧹 AGGRESSIVE POST-PROCESSING: Remove filler words LLM keeps adding
+            response = self.cleanup_response(response)
+            
             logger.info(f"✅ LLM response generated in <4s: {response[:100]}...")
             return response
             
@@ -311,9 +314,57 @@ Just text ONE short natural question or response (under 80 chars)."""
             logger.error(f"❌ LLM error: {e} - Returning safe response")
             # NO TEMPLATES - just return safe questioning
             return "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
-
-            logger.info(f"Using fallback template (Turn {turn_number})")
-            return fallback
+    
+    def cleanup_response(self, response: str) -> str:
+        """
+        Aggressively clean up LLM response to remove unwanted patterns.
+        
+        Even with explicit instructions, LLMs sometimes add:
+        - Filler words: Matlab?, Huh?, Well, Umm, etc.
+        - Quotes around text
+        - Multiple punctuation marks
+        
+        This function forcefully removes them.
+        """
+        import re
+        
+        # Remove quotes at start/end
+        response = response.strip('"\'')
+        
+        # Remove filler words at end (case insensitive)
+        # Pattern: remove "Matlab?", "Huh?", "??", "Well", "Umm", etc. at end
+        filler_patterns = [
+            r'\s+Matlab\??$',
+            r'\s+Huh\??$',
+            r'\s+\?\?+$',  # Multiple question marks
+            r'\s+Well$',
+            r'\s+Umm+$',
+            r'\s+Uhh+$',
+            r'\s+Hmm+$',
+            r'^\s*Actually,?\s*',  # Actually at start
+            r'\s+Actually,?\s*$',   # Actually at end
+            r'^\s*One sec,?\s*',
+            r'\s+One sec,?\s*$',
+            r'^\s*Just a minute,?\s*',
+            r'\s+Just a minute,?\s*$',
+            r'^\s*Let me think,?\s*',
+            r'\s+Let me think,?\s*$',
+        ]
+        
+        for pattern in filler_patterns:
+            response = re.sub(pattern, '', response, flags=re.IGNORECASE)
+        
+        # Clean up trailing punctuation (max 1 question mark or period)
+        response = re.sub(r'\?{2,}$', '?', response)  # ?? → ?
+        response = re.sub(r'\.{2,}$', '.', response)  # ... → .
+        
+        # Remove trailing spaces
+        response = response.strip()
+        
+        # Ensure ends properly (no dangling commas)
+        response = re.sub(r',\s*$', '', response)
+        
+        return response
     
     def generate_response_sync(
         self,
