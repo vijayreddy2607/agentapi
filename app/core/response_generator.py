@@ -217,6 +217,24 @@ Generate ONE SHORT message (1-2 sentences max)."""
             ])
             user_message = f"Recent conversation:\n{context}\n\nScammer's latest message: {scammer_message}\n\nGenerate your response:"
         
+        
+        # 🚨 NUCLEAR OTP DENIAL - Check BEFORE LLM/templates! 🚨
+        # If scammer mentions OTP, return INSTANT denial
+        scammer_lower = scammer_message.lower()
+        if any(kw in scammer_lower for kw in ['otp', 'one time password', 'one-time', 'o.t.p']):
+            import random
+            denials = [
+                "What OTP beta? I didnt get any SMS",
+                "OTP? Maine koi msg nahi dekha",
+                "Which OTP? No message came",
+                "OTP matlab? Koi SMS nahi aaya",
+                "Beta koi OTP nahi aaya, network problem?",
+                "What OTP u talking? I dont see any msg"
+            ]
+            denial = random.choice(denials)
+            logger.warning(f"🚫 OTP DETECTED - FORCING DENIAL: {denial}")
+            return denial
+        
         try:
             # Dynamic temperature for variety (higher = more creative/varied)
             # Turn 1-2: Lower temp (0.7) - more predictable
