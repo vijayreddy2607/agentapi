@@ -253,21 +253,7 @@ Generate ONE SHORT message (1-2 sentences max)."""
             logger.error(f"❌ LLM error: {e} - Returning safe response")
             # NO TEMPLATES - just return safe questioning
             return "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
-                start_idx = 2
-                end_idx = min(16, len(templates)-1)
-                if start_idx <= end_idx:
-                    fallback = templates[random.randint(start_idx, end_idx)]
-                else:
-                    fallback = templates[0]
-            
-            logger.info(f"Using template fallback (Turn {turn_number}): {fallback[:50]}...")
-            return fallback
 
-            # Fallback logic
-            persona_data = get_persona_templates(persona)
-            templates = persona_data["templates"]
-            
-            if turn_number <= 2:
                 # Use one of the first 2 templates (Intro)
                 import random
                 fallback = templates[random.randint(0, min(1, len(templates)-1))]
