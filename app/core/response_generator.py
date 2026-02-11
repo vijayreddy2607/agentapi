@@ -228,24 +228,27 @@ Generate ONE SHORT message (1-2 sentences max)."""
             else:
                 temperature = 0.95  # High variety for later turns
             
-            # CRITICAL: Wrap with timeout to meet GUVI's 6-second deadline
-            # If LLM takes >4s, we fall back to template (ensuring <6s total response)
+            # CRITICAL: 6s timeout to ensure LLM has enough time
+            # Previous 4s timeout was too short, causing template fallback
             import asyncio
             response = await asyncio.wait_for(
                 self.llm_client.generate_response(
                     system_prompt=system_prompt,
                     user_message=user_message,
                     temperature=temperature,
-                    max_tokens=40  # Reduced from 60 for faster generation
+                    max_tokens=60  # Increased from 40 for complete responses
                 ),
-                timeout=4.0  # 4s max for LLM, leaving 2s for processing/network
+                timeout=6.0  # 6s max for LLM - no more premature fallback!
             )
             
             logger.info(f"✅ LLM response generated in <4s: {response[:100]}...")
             return response
             
         except asyncio.TimeoutError:
-            logger.warning(f"⏱️ LLM timeout after 4s - using template fallback")
+            logger.error(f"⏱️ LLM timeout after 6s - THIS SHOULD RARELY HAPPEN!")
+            # CRITICAL: Even in fallback, NEVER acknowledge OTP!
+            # Return a safe denial response
+            return "What OTP? I didnt get any SMS beta. Phone problem hai kya?"
             # Fallback logic (same as below)
             persona_data = get_persona_templates(persona)
             templates = persona_data["templates"]
