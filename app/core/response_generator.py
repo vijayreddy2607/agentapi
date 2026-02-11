@@ -245,22 +245,14 @@ Generate ONE SHORT message (1-2 sentences max)."""
             return response
             
         except asyncio.TimeoutError:
-            logger.error(f"⏱️ LLM timeout after 6s - THIS SHOULD RARELY HAPPEN!")
-            # CRITICAL: Even in fallback, NEVER acknowledge OTP!
-            # Return a safe denial response
-            return "What OTP? I didnt get any SMS beta. Phone problem hai kya?"
-            # Fallback logic (same as below)
-            persona_data = get_persona_templates(persona)
-            templates = persona_data["templates"]
+            logger.error(f"⏱️ LLM timeout after 6s - RARE! Returning safe denial")
+            # NO TEMPLATES - just return safe denial
+            return "Beta main confuse hoon... Mujhe thoda time do, samajh nahi aa raha"
             
-            if turn_number <= 2:
-                # Use one of the first 2 templates (Intro)
-                import random
-                fallback = templates[random.randint(0, min(1, len(templates)-1))]
-            else:
-                # Use mid-conversation templates (indices 2-16 approx)
-                # Ensure we don't go out of bounds
-                import random
+        except Exception as e:
+            logger.error(f"❌ LLM error: {e} - Returning safe response")
+            # NO TEMPLATES - just return safe questioning
+            return "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
                 start_idx = 2
                 end_idx = min(16, len(templates)-1)
                 if start_idx <= end_idx:
