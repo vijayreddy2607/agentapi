@@ -124,16 +124,22 @@ class HumanBehavior:
     
     def add_hesitation(self, text: str) -> str:
         """Add hesitation markers at the beginning."""
-        if random.random() > 0.15:  # 15% chance
-            return text
+        # DISABLED FOR COMPETITION: Filler words reduce conversation quality score
+        # These markers (Umm, Hmm, Hold on, etc.) make responses feel unnatural
+        # LLM already generates natural pauses in the conversation flow
+        return text  # Return unchanged
         
-        hesitation = random.choice(self.HESITATIONS)
-        
-        # Add at beginning with comma
-        if not text.startswith(("Wait", "Umm", "Hmm", "Just", "Hold")):
-            text = f"{hesitation.capitalize()}, {text}"
-        
-        return text
+        # OLD CODE (disabled):
+        # if random.random() > 0.15:  # 15% chance
+        #     return text
+        # 
+        # hesitation = random.choice(self.HESITATIONS)
+        # 
+        # # Add at beginning with comma
+        # if not text.startswith(("Wait", "Umm", "Hmm", "Just", "Hold")):
+        #     text = f"{hesitation.capitalize()}, {text}"
+        # 
+        # return text
     
     def remove_some_punctuation(self, text: str) -> str:
         """Remove some punctuation to seem more casual."""
