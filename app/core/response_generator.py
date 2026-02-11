@@ -308,12 +308,14 @@ Just text ONE short natural question or response (under 80 chars)."""
         except asyncio.TimeoutError:
             logger.error(f"⏱️ LLM timeout after 3.5s - Returning fast fallback")
             # Fast fallback for competition speed
-            return "Beta samjhao properly... main confuse ho gaya"
+            fallback = "Beta samjhao properly... main confuse ho gaya"
+            return self.cleanup_response(fallback)
             
         except Exception as e:
             logger.error(f"❌ LLM error: {e} - Returning safe response")
-            # NO TEMPLATES - just return safe questioning
-            return "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
+            # NO TEMPLATES - just return safe questioning  
+            fallback = "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
+            return self.cleanup_response(fallback)
     
     def cleanup_response(self, response: str) -> str:
         """
@@ -418,6 +420,9 @@ Just text ONE short natural question or response (under 80 chars)."""
                 temperature=temperature,
                 max_tokens=150  # Keep responses concise
             )
+            
+            # 🧹 CLEANUP: Remove filler words from sync responses too
+            response = self.cleanup_response(response)
             
             logger.info(f"Response generated: {response[:100]}...")
             return response
