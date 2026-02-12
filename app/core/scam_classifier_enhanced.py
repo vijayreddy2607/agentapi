@@ -126,6 +126,53 @@ class EnhancedScamClassifier:
         "unknown": "uncle"             # Default to Uncle
     }
     
+    @staticmethod
+    def normalize_typos(text: str) -> str:
+        """
+        Normalize common typo/obfuscation patterns used by scammers.
+        
+        Examples:
+            - 'bl0cked' → 'blocked'
+            - 'acct' → 'account'
+            - 'verif y' → 'verify'
+            - 'ur gent' → 'urgent'
+        """
+        normalized = text.lower()
+        
+        # Leet speak and number substitutions
+        substitutions = {
+            '0': 'o', '1': 'i', '3': 'e', '4': 'a',
+            '5': 's', '7': 't', '8': 'b', '@': 'a'
+        }
+        for char, replacement in substitutions.items():
+            normalized = normalized.replace(char, replacement)
+        
+        # Remove extra spaces (catches "verif y" → "verify")
+        normalized = re.sub(r'\s+', '', normalized)
+        
+        # Common abbreviations
+        abbreviations = {
+            'acct': 'account',
+            'acc': 'account',
+            'blk': 'block',
+            'blkd': 'blocked',
+            'verif': 'verify',
+            'verf': 'verify',
+            'urgnt': 'urgent',
+            'immed': 'immediate',
+            'pls': 'please',
+            'msg': 'message',
+            'yr': 'your',
+            'ur': 'your',
+            'phn': 'phone',
+            'ph': 'phone'
+        }
+        
+        for abbr, full in abbreviations.items():
+            normalized = re.sub(r'\b' + abbr + r'\b', full, normalized)
+        
+        return normalized
+    
     def classify(self, message: str) -> Tuple[str, str, float]:
         """
         Classify scam message into specific type.
@@ -137,6 +184,8 @@ class EnhancedScamClassifier:
             Tuple of (scam_type, recommended_persona, confidence)
         """
         message_lower = message.lower()
+        # Also normalize for typo tolerance
+        message_normalized = self.normalize_typos(message)
         
         # Score each scam type
         scores = {}
@@ -145,7 +194,8 @@ class EnhancedScamClassifier:
             keywords_found = []
             
             for keyword in pattern["keywords"]:
-                if keyword in message_lower:
+                # Check both original and normalized versions
+                if keyword in message_lower or keyword in message_normalized:
                     score += pattern["weight"]
                     keywords_found.append(keyword)
             
