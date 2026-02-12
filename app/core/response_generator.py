@@ -290,35 +290,31 @@ Just text ONE short natural question or response (under 80 chars)."""
                 # Persona-specific EXTRACTION tactics (never reveal OTP, ask for THEIR info!)
                 if 'uncle' in persona.lower():
                     denials = [
-                        "Beta OTP aa gaya, par pehle aapka WhatsApp number kya hai?",
-                        "Haan OTP dekh raha hoon, par aapka employee ID kya hai verify ke liye?",
-                        "Beta OTP kyun chahiye? Pehle batao reason kya hai?",
-                        "OTP hai mere paas, par aapka office email ID kya hai confirm ke liye?",
-                        "Ruko beta, OTP share karne se pehle aapka supervisor ka number do"
+                        "Haan beta OTP bhej dunga, par pehle aapka WhatsApp number kya hai?",
+                        "Thik hai beta kar dunga, par aapka website link aur number batao ji?",
+                        "Beta main send kar dunga, par pehle aapka official number aur email ID do",
+                        "Arre haan kar dunga, par verification ke liye aapka website kya hai?",
+                        "Thik hai beta bhejunga, par pehle aapka customer care number batao"
                     ]
                 elif 'aunty' in persona.lower():
                     denials = [
-                        "Beta OTP aa gaya, par pehle aapka naam aur ID batao ji?",
-                        "Haan beta message aaya, par aapka WhatsApp number kya hai?",
-                        "OTP kyun chahiye beta? Kya verify kar rahe ho?",
-                        "Beta confirm karo pehle - aapka office ka landline number kya hai?",
-                        "OTP dene se pehle aapka manager ka naam batao beta"
+                        "Haan beta bhej dungi, par pehle aapka number aur naam batao ji?",
+                        "Beta thik hai bhejungi, par aapka WhatsApp number kya hai confirm ke liye?",
+                        "Arre bhej dungi beta, par pehle aapka website link aur email ID do",
+                        "Beta kar dungi, par aapka office ka phone number batao verification ke liye?"
                     ]
                 elif 'student' in persona.lower():
                     denials = [
-                        "Bro OTP mila but pehle tera WhatsApp number kya hai?",
-                        "Yaar OTP hai but why you need it? Explain kar pehle",
-                        "OTP dekh liya bro, par tera employee ID aur email kya hai?",
-                        "Arre bhai OTP share karne se pehle tera company website link bhej",
-                        "OTP hai but verify kar - tera supervisor ka number kya hai?"
+                        "Bro bhej dunga, par pehle tera number aur employee ID bata",
+                        "OK bhai kar dunga, par tera WhatsApp number aur website link kya hai?",
+                        "Haan bro send kar dunga, par pehle tera official email aur number de",
+                        "Thik hai bhai bhejta hoon, par verification ke liye tera contact details do"
                     ]
                 else:
                     denials = [
-                        "I got the OTP, but what's your WhatsApp number first?",
-                        "OTP is here, but why do you need it? Explain please",
-                        "Before sharing OTP, give me your employee ID and email",
-                        "I see the OTP, but verify yourself first - your office number?",
-                        "OTP received, but who is your supervisor? Give contact details"
+                        "Haan bhej dunga, par pehle aapka number aur website link batao",
+                        "Thik hai kar dunga, par aapka WhatsApp number kya hai?",
+                        "Ji send kar dunga, par pehle aapka official contact details do"
                     ]
                 
                 response = random.choice(denials)
