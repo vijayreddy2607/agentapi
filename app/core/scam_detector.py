@@ -49,11 +49,24 @@ class ScamDetector:
             # Stage 2: Enhanced Keyword Classifier (Instant Scam Detect)
             enhanced_type, enhanced_persona, enhanced_conf = enhanced_classifier.classify(message_text)
             
+            # 🆕 CONTEXT-AWARE CONFIDENCE ADJUSTMENT
+            is_first_message = not conversation_history or len(conversation_history) == 0
+            turn_number = len(conversation_history) + 1 if conversation_history else 1
+            
+            adjusted_conf = self._adjust_confidence_by_context(
+                base_confidence=enhanced_conf,
+                is_first_message=is_first_message,
+                turn_number=turn_number,
+                message_text=message_text
+            )
+            
+            logger.info(f"🎯 Turn {turn_number}: base={enhanced_conf:.2f} → adjusted={adjusted_conf:.2f}")
+            
             # If high confidence keyword match (>0.7), return immediately
-            if enhanced_conf >= 0.7:
+            if adjusted_conf >= 0.7:
                  return ScamDetection(
                     is_scam=enhanced_type != "unknown",
-                    confidence=enhanced_conf,
+                    confidence=adjusted_conf,
                     scam_type=enhanced_type,
                     recommended_agent=enhanced_persona,
                     reasoning=f"High confidence keyword match: {enhanced_type}"
@@ -177,3 +190,42 @@ class ScamDetector:
             logger.error(f"JSON Parsing failed: {e}")
             return ScamDetection(is_scam=False, confidence=0.0, scam_type="unknown", recommended_agent="uncle", reasoning="Parse Error")
 
+    def _adjust_confidence_by_context(
+        self,
+        base_confidence: float,
+        is_first_message: bool,
+        turn_number: int,
+        message_text: str
+    ) -> float:
+        """
+        Adjust confidence based on conversation context.
+        
+        Strategy:
+        - First message + clear scam indicators = BOOST (+0.15)
+        - Ongoing conversation (3-10 turns) = REDUCE (-0.05)
+        - Long conversation (10+ turns) = REDUCE more (-0.15)
+        """
+        adjusted = base_confidence
+        message_lower = message_text.lower()
+        
+        # BOOST for first message with urgency/threats
+        if is_first_message:
+            urgency_keywords = ['urgent', 'immediately', 'blocked', 'freeze', 'arrest', 'deadline', 'suspended']
+            if any(kw in message_lower for kw in urgency_keywords):
+                adjusted += 0.15
+                logger.debug(f"   📈 First message + urgency: +0.15 boost → {adjusted:.2f}")
+        
+        # REDUCE for ongoing conversations (trust building)
+        elif 3 <= turn_number <= 10:
+            adjusted -= 0.05
+            logger.debug(f"   📉 Ongoing conversation (Turn {turn_number}): -0.05 → {adjusted:.2f}")
+        
+        elif turn_number > 10:
+            adjusted -= 0.15
+            logger.debug(f"   📉 Long conversation (Turn {turn_number}): -0.15 → {adjusted:.2f}")
+        
+        # Clamp to [0.0, 1.0]
+        return max(0.0, min(1.0, adjusted))
+
+# Global detector instance
+scam_detector = ScamDetector()

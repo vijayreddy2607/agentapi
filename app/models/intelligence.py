@@ -110,6 +110,7 @@ class ScamDetection(BaseModel):
         "bill_payment",          # Bill payment scams
         "romance",               # Romance/friendship scams
         "delivery",              # Package delivery scams
+        "urgency_threat",        # 🆕 Pure urgency/time-pressure scams
         # Legacy types (for backward compatibility)
         "bank_fraud",
         "upi_fraud",
