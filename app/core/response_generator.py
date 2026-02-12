@@ -173,6 +173,12 @@ EXTRACTION FOCUS:
 PHASE: {turn_strategy['name']} (Turn {turn_number})
 {turn_strategy['instructions']}
 
+🚨 CRITICAL SECURITY RULES - NEVER BREAK THESE:
+- NEVER share OTP numbers (even fake ones)
+- NEVER share PIN/CVV/password
+- If asked for OTP → say "Beta wait, let me check" or "Phone is in other room"
+- NEVER type actual digits when OTP/PIN is asked
+
 HOW TO TEXT:
 - Just type naturally like WhatsApp/SMS
 - 1 short sentence (40-80 characters max)
@@ -257,48 +263,58 @@ Just text ONE short natural question or response (under 80 chars)."""
                 timeout=4.8  # Increased from 3.5s - allows more natural LLM responses
             )
             
-            # 🚨 SMART OTP SAFETY: Only override if sharing actual digits/codes 🚨
+            # 🚨 STRICT OTP/PIN/CVV SAFETY: NEVER share any sensitive numbers 🚨
             response_lower = response.lower()
             
-            # Check if response contains actual OTP digits (6-digit codes) or explicit sharing
+            # Check if response mentions OTP/PIN/CVV or contains digits being shared
             import re
-            has_otp_digits = bool(re.search(r'\b\d{6}\b', response))  # 6-digit codes
-            has_otp_sharing = any(phrase in response_lower for phrase in [
-                'otp is', 'otp code', 'the otp', 'my otp',
-                'otp:', 'code:', 'code is', 'here is'
+            
+            # Block ANY digit patterns when OTP/PIN/CVV is in context
+            has_sensitive_context = any(word in response_lower for word in [
+                'otp', 'pin', 'cvv', 'password', 'code', 'passcode'
             ])
             
-            # Only override if actually trying to SHARE an OTP
-            if has_otp_digits or has_otp_sharing:
+            # Block digit patterns (4-8 digits) near sensitive keywords
+            has_digits_shared = bool(re.search(r'\b\d{3,8}\b', response))
+            
+            # Block explicit sharing phrases
+            has_sharing_intent = any(phrase in response_lower for phrase in [
+                'otp is', 'otp hai', 'code is', 'code hai', 'pin is', 'pin hai',
+                'otp:', 'code:', 'pin:', 'here is', 'yeh hai', 'this is'
+            ])
+            
+            # ALWAYS override if ANY of these conditions met
+            if (has_sensitive_context and has_digits_shared) or has_sharing_intent:
                 import random
-                # Persona-specific varied denials
+                # Persona-specific DELAY tactics (never reveal numbers!)
                 if 'uncle' in persona.lower():
                     denials = [
-                        "Beta, I'm checking my phone... no OTP message came yet. Your system sent it?",
-                        "Arre, my message box is empty. OTP kahan hai? Maybe delayed?",
-                        "Wait beta, let me check SMS... no nothing from bank. Send again?",
-                        "OTP nahi aaya abhi tak. My phone network is slow sometimes...",
+                        "Beta wait, let me check my phone properly",
+                        "Arre phone doosre room mein hai, 2 minute rukho",
+                        "Beta abhi phone charge pe hai, thoda wait karo",
+                        "Message box check kar raha hoon, beta wait",
+                        "Phone ka network slow hai, rukho beta"
                     ]
                 elif 'aunty' in persona.lower():
                     denials = [
-                        "Arre beta, I don't see any message! My phone is working or not?",
-                        "No SMS came ji! Should I restart my phone?",
-                        "Beta OTP kidhar hai? I checked all messages, nothing...",
-                        "Wait let me ask my bahu... she says no message came..."
+                        "Beta wait, bahu ko phone leke aarahi hoon",
+                        "Arre specs kidhar gaye? Dhoondhke batati hoon",
+                        "Beta thoda time do, message check karti hoon",
+                        "Phone husband ne le liya, 5 minute mein bulati hoon"
                     ]
                 elif 'student' in persona.lower():
                     denials = [
-                        "Bro no OTP in my inbox... server issue hai kya?",
-                        "Not getting any code yaar... resend kar do?",
-                        "Check karke no message came... network problem maybe?",
-                        "Nahi aaya yaar... spam folder me bhi nahi hai..."
+                        "Bro wait, phone battery dead hai charging pe lagaya",
+                        "Arre yaar class mein hoon, baad mein check karta hoon",
+                        "Wait bro phone laptop pe sync nahi hua",
+                        "2 min bro, hostel WiFi slow hai messages load nahi ho rahe"
                     ]
                 else:
                     denials = [
-                        "I'm not seeing any OTP message... can you resend?",
-                        "No message came yet... where should I check?",
-                        "Checking my phone... no OTP here... send again?",
-                        "Still waiting for the code... hasn't arrived yet..."
+                        "Wait let me check properly",
+                        "Phone is in the other room, give me a minute",
+                        "Let me find my glasses first",
+                        "Just a moment, checking messages now"
                     ]
                 
                 response = random.choice(denials)
