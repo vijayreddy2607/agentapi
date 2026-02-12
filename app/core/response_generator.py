@@ -305,10 +305,10 @@ Just text ONE short natural question or response (under 80 chars)."""
                     ]
                 elif 'student' in persona.lower():
                     denials = [
-                        "Bro bhej dunga, par pehle tera number aur employee ID bata",
-                        "OK bhai kar dunga, par tera WhatsApp number aur website link kya hai?",
-                        "Haan bro send kar dunga, par pehle tera official email aur number de",
-                        "Thik hai bhai bhejta hoon, par verification ke liye tera contact details do"
+                        "Sure bro I'll send it, but first what's your number and employee ID?",
+                        "OK I'll do it, but what's your WhatsApp number and website link?",
+                        "Yeah I'll send it, but first give me your official email and number",
+                        "Alright I'll share it, but need your contact details for verification first"
                     ]
                 else:
                     denials = [
