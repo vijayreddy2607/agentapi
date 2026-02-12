@@ -9,12 +9,23 @@ UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{11,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})\b')
 
 # Phone Number Pattern: Indian phone numbers (various formats)
-PHONE_PATTERN = re.compile(r'(\+?91[-\s]?[6-9]\d{9}|\b[6-9]\d{9}\b)')
+# Matches: 9876543210, 98765-43210, +91-9876543210, +91 98765 43210
+PHONE_PATTERN = re.compile(r'(\+?91[-\s]?[6-9]\d{4}[-\s]?\d{5}|\b[6-9]\d{4}[-\s]?\d{5}\b|\+?91[-\s]?[6-9]\d{9}|\b[6-9]\d{9}\b)')
 
 # URL Pattern: http/https links
 URL_PATTERN = re.compile(
     r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 )
+
+# 🆕 OBFUSCATED URL PATTERN: Catches "dot com", "[.]com", "hxxp://", etc.
+# Matches: sbi-secure dot com, example[.]com, bank-verify (dot) in, hxxp://scam
+OBFUSCATED_URL_PATTERN = re.compile(
+    r'(?:https?|hxxps?|h\*\*p)://[^\s]+|'  # hxxp://scam
+    r'(?:[a-z0-9-]+)\s*(?:dot|\[?\.\]?|\(\s*dot\s*\))\s*(?:com|in|org|net|co|info)(?:/[^\s]*)?|'  # example dot com or (dot)
+    r'(?:[a-z0-9-]+\[\.\][a-z]+(?:/[^\s]*)?)',  # example[.]com/path
+    re.IGNORECASE
+)
+
 
 # 🆕 EMPLOYEE ID PATTERN: Extracts employee/customer IDs
 # Matches: ID 12345, employee ID: 98765, EMP12345, employee ID is 4521
@@ -55,6 +66,18 @@ EMAIL_PATTERN = re.compile(r'[\w.-]+@[\w.-]+\.\w+')
 # 🆕 PINCODE PATTERN: Extracts Indian pin codes (but NOT sequential/repeated digits)
 # Matches: 110001, 400001, etc. but NOT 123456, 111111, 987654
 PINCODE_PATTERN = re.compile(r'\b[1-9]\d{5}\b')
+
+# 🆕 WRITTEN NUMBER PATTERN: Detects written-out numbers
+# Matches: "nine eight seven six five", "seven zero one",  etc.
+WRITTEN_NUMBER_MAP = {
+    'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+    'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'
+}
+WRITTEN_NUMBER_PATTERN = re.compile(
+    r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine)(?:\s+(?:zero|one|two|three|four|five|six|seven|eight|nine)){4,}\b',
+    re.IGNORECASE
+)
+
 
 # 🆕 DEPARTMENT HEAD PATTERN: Extracts department head/manager names
 # Matches: "department head Mr. X", "head Amit Singh", "manager Raj Sharma"
@@ -127,9 +150,22 @@ def extract_bank_accounts(text: str) -> list[str]:
     return filtered
 
 
+def convert_written_numbers(text: str) -> str:
+    """Convert written numbers to digits. 'nine eight seven' -> '987'."""
+    matches = WRITTEN_NUMBER_PATTERN.findall(text)
+    for match in matches:
+        words = match.lower().split()
+        digits = ''.join([WRITTEN_NUMBER_MAP.get(word, '') for word in words])
+        text = text.replace(match, digits)
+    return text
+
+
 def extract_phone_numbers(text: str) -> list[str]:
-    """Extract phonenumbers from text."""
-    matches = PHONE_PATTERN.findall(text)
+    """Extract phone numbers from text, including written ones and hyphenated formats."""
+    # First convert written numbers to digits
+    text_converted = convert_written_numbers(text)
+    
+    matches = PHONE_PATTERN.findall(text_converted)
     # Clean up format: remove +91, spaces, dashes
     cleaned = []
     for match in matches:
@@ -143,8 +179,25 @@ def extract_phone_numbers(text: str) -> list[str]:
 
 
 def extract_urls(text: str) -> list[str]:
-    """Extract URLs from text."""
-    return URL_PATTERN.findall(text)
+    """Extract URLs from text, including obfuscated ones."""
+    urls = []
+    
+    # Regular URLs
+    urls.extend(URL_PATTERN.findall(text))
+    
+    # Obfuscated URLs (dot com, [.]com, etc.)
+    obfuscated = OBFUSCATED_URL_PATTERN.findall(text)
+    for url in obfuscated:
+        # Normalize obfuscated formats
+        normalized = url.replace(' dot ', '.').replace('dot ', '.').replace(' dot', '.')
+        normalized = normalized.replace('[.]', '.').replace('(.)', '.')
+        normalized = normalized.replace('( dot )', '.').replace('(dot)', '.')
+        normalized = normalized.replace('hxxp', 'http').replace('h**p', 'http')
+        if normalized not in urls:
+            urls.append(normalized)
+    
+    return list(set(urls))  # Remove duplicates
+
 
 
 def extract_employee_ids(text: str) -> list[str]:
