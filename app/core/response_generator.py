@@ -176,8 +176,9 @@ PHASE: {turn_strategy['name']} (Turn {turn_number})
 🚨 CRITICAL SECURITY RULES - NEVER BREAK THESE:
 - NEVER share OTP numbers (even fake ones)
 - NEVER share PIN/CVV/password
-- If asked for OTP → say "Beta wait, let me check" or "Phone is in other room"
+- If asked for OTP → say "I got OTP, but aapka WhatsApp number kya hai?" or "OTP kyun chahiye? Pehle verify karo"
 - NEVER type actual digits when OTP/PIN is asked
+- Turn OTP requests into EXTRACTION opportunities (ask for their number/email/ID)
 
 HOW TO TEXT:
 - Just type naturally like WhatsApp/SMS
@@ -286,35 +287,38 @@ Just text ONE short natural question or response (under 80 chars)."""
             # ALWAYS override if ANY of these conditions met
             if (has_sensitive_context and has_digits_shared) or has_sharing_intent:
                 import random
-                # Persona-specific DELAY tactics (never reveal numbers!)
+                # Persona-specific EXTRACTION tactics (never reveal OTP, ask for THEIR info!)
                 if 'uncle' in persona.lower():
                     denials = [
-                        "Beta wait, let me check my phone properly",
-                        "Arre phone doosre room mein hai, 2 minute rukho",
-                        "Beta abhi phone charge pe hai, thoda wait karo",
-                        "Message box check kar raha hoon, beta wait",
-                        "Phone ka network slow hai, rukho beta"
+                        "Beta OTP aa gaya, par pehle aapka WhatsApp number kya hai?",
+                        "Haan OTP dekh raha hoon, par aapka employee ID kya hai verify ke liye?",
+                        "Beta OTP kyun chahiye? Pehle batao reason kya hai?",
+                        "OTP hai mere paas, par aapka office email ID kya hai confirm ke liye?",
+                        "Ruko beta, OTP share karne se pehle aapka supervisor ka number do"
                     ]
                 elif 'aunty' in persona.lower():
                     denials = [
-                        "Beta wait, bahu ko phone leke aarahi hoon",
-                        "Arre specs kidhar gaye? Dhoondhke batati hoon",
-                        "Beta thoda time do, message check karti hoon",
-                        "Phone husband ne le liya, 5 minute mein bulati hoon"
+                        "Beta OTP aa gaya, par pehle aapka naam aur ID batao ji?",
+                        "Haan beta message aaya, par aapka WhatsApp number kya hai?",
+                        "OTP kyun chahiye beta? Kya verify kar rahe ho?",
+                        "Beta confirm karo pehle - aapka office ka landline number kya hai?",
+                        "OTP dene se pehle aapka manager ka naam batao beta"
                     ]
                 elif 'student' in persona.lower():
                     denials = [
-                        "Bro wait, phone battery dead hai charging pe lagaya",
-                        "Arre yaar class mein hoon, baad mein check karta hoon",
-                        "Wait bro phone laptop pe sync nahi hua",
-                        "2 min bro, hostel WiFi slow hai messages load nahi ho rahe"
+                        "Bro OTP mila but pehle tera WhatsApp number kya hai?",
+                        "Yaar OTP hai but why you need it? Explain kar pehle",
+                        "OTP dekh liya bro, par tera employee ID aur email kya hai?",
+                        "Arre bhai OTP share karne se pehle tera company website link bhej",
+                        "OTP hai but verify kar - tera supervisor ka number kya hai?"
                     ]
                 else:
                     denials = [
-                        "Wait let me check properly",
-                        "Phone is in the other room, give me a minute",
-                        "Let me find my glasses first",
-                        "Just a moment, checking messages now"
+                        "I got the OTP, but what's your WhatsApp number first?",
+                        "OTP is here, but why do you need it? Explain please",
+                        "Before sharing OTP, give me your employee ID and email",
+                        "I see the OTP, but verify yourself first - your office number?",
+                        "OTP received, but who is your supervisor? Give contact details"
                     ]
                 
                 response = random.choice(denials)
