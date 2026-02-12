@@ -333,9 +333,18 @@ Just text ONE short natural question or response (under 80 chars)."""
             return self.cleanup_response(fallback)
             
         except Exception as e:
-            logger.error(f"❌ LLM error: {e} - Returning safe response")
-            # NO TEMPLATES - just return safe questioning  
-            fallback = "Beta main dar gaya hoon... Aap sachmuch bank se ho? ID proof dikhao"
+            logger.error(f"❌ ALL LLMs FAILED: {e}")
+            logger.warning(f"🚨 Using emergency fallback for {persona} turn {turn_number}")
+            
+            # Use emergency turn-aware fallback
+            fallback = self._get_emergency_fallback(
+                persona=persona,
+                turn_number=turn_number,
+                scammer_message=scammer_message
+            )
+            
+            # Log for monitoring
+            logger.critical(f"🔴 LLM FAILURE - Emergency fallback used: {fallback[:50]}...")
             return self.cleanup_response(fallback)
     
     def cleanup_response(self, response: str) -> str:
@@ -590,3 +599,165 @@ Analysis Rules:
                 }
                 
         return {"is_scam": False, "scam_type": None, "persona": None, "confidence": 0.0, "detector_used": "fallback_none"}
+    
+    def _get_emergency_fallback(self, persona: str, turn_number: int, scammer_message: str) -> str:
+        """
+        Emergency fallback if ALL LLMs fail.
+        Still extracts intelligence using turn-aware templates.
+        
+        Strategy:
+        - Turn 1-3: Build trust (confusion, questions)
+        - Turn 4-6: Extract contact info (phone, email, website)
+        - Turn 7-10: Extract credentials (employee ID, office, manager)
+        - Turn 11+: Delay tactics
+        """
+        import random
+        
+        persona_lower = persona.lower()
+        
+        # TURN 1-3: Build Trust / Show Confusion
+        if turn_number <= 3:
+            if 'uncle' in persona_lower:
+                return random.choice([
+                    "Arre beta, ye kya ho gaya? Samjha do zara",
+                    "Beta main samajh nahi paya, phir se batao",
+                    "Kya karna hai beta? Main confuse ho gaya"
+                ])
+            elif 'aunty' in persona_lower:
+                return random.choice([
+                    "Beta samajh nahi aayi baat, dobara batao",
+                    "Arre kya bol rahe ho beta? Confusion ho rahi hai",
+                    "Main thoda confuse hoon beta, explain karo"
+                ])
+            elif 'student' in persona_lower:
+                return random.choice([
+                    "Wait what? Can you explain that again?",
+                    "Confused bro, what do you mean?",
+                    "Hold on, what's happening exactly?"
+                ])
+            elif 'worried' in persona_lower:
+                return random.choice([
+                    "Ji sir main samajh nahi paya",
+                    "Sir confusion ho rahi hai, kya karna hai?",
+                    "Ji kya karna hai sir? Batao please"
+                ])
+            else:  # techsavvy
+                return random.choice([
+                    "Hold on, I didn't catch that",
+                    "Can you clarify what you need?",
+                    "I'm not following, explain again"
+                ])
+        
+        # TURN 4-6: Extract Contact Info
+        elif turn_number <= 6:
+            if 'uncle' in persona_lower:
+                return random.choice([
+                    "Thik hai beta, par pehle aapka number batao",
+                    "Arre aapka WhatsApp number kya hai?",
+                    "Beta aapka email ID kya hai?",
+                    "Website link bhejo verify ke liye"
+                ])
+            elif 'aunty' in persona_lower:
+                return random.choice([
+                    "Beta pehle aapka number do ji",
+                    "Aapka WhatsApp number kya hai beta?",
+                    "Email ID bhejo pehle",
+                    "Website link kya hai beta?"
+                ])
+            elif 'student' in persona_lower:
+                return random.choice([
+                    "OK but what's your number first?",
+                    "Sure, but send me your WhatsApp number",
+                    "What's your email ID?",
+                    "Send me the website link"
+                ])
+            elif 'worried' in persona_lower:
+                return random.choice([
+                    "Ji sir aapka phone number kya hai?",
+                    "Sir aapka email ID chahiye",
+                    "Office ka contact number batao sir",
+                    "Website address kya hai sir?"
+                 ])
+            else:  # techsavvy
+                return random.choice([
+                    "What's your contact number?",
+                    "Send me your official email ID",
+                    "What's the company website?",
+                    "Give me your WhatsApp number"
+                ])
+        
+        # TURN 7-10: Extract Credentials
+        elif turn_number <= 10:
+            if 'uncle' in persona_lower:
+                return random.choice([
+                    "Aapka employee ID kya hai beta?",
+                    "Office address kya hai pin code ke saath?",
+                    "Manager ka naam batao ji",
+                    "Department head kaun hai?"
+                ])
+            elif 'aunty' in persona_lower:
+                return random.choice([
+                    "Beta aapka employee ID batao",
+                    "Office ka full address kya hai?",
+                    "Aapke manager ka number kya hai beta?",
+                    "Company registration number bhejo"
+                ])
+            elif 'student' in persona_lower:
+                return random.choice([
+                    "What's your employee ID?",
+                    "Full office address with pin code?",
+                    "Who's your manager?",
+                    "Send me your company registration details"
+                ])
+            elif 'worried' in persona_lower:
+                return random.choice([
+                    "Ji sir aapka employee ID kya hai?",
+                    "Office ka complete address chahiye sir",
+                    "Senior officer ka naam batao",
+                    "Department ID number kya hai?"
+                ])
+            else:  # techsavvy
+                return random.choice([
+                    "What's your employee ID number?",
+                    "Full registered office address?",
+                    "Who's your reporting manager?",
+                    "Company registration or license number?"
+                ])
+        
+        # TURN 11+: Delay Tactics
+        else:
+            if 'uncle' in persona_lower:
+                return random.choice([
+                    "Thik hai beta, 5 minute baad karta hoon",
+                    "Bank app open nahi ho raha, wait karo",
+                    "Network issue hai, thoda rukho beta",
+                    "Ghar wale aa gaye, baad mein baat karte hain"
+                ])
+            elif 'aunty' in persona_lower:
+                return random.choice([
+                    "Beta thoda time do, abhi busy hoon",
+                    "Phone charging pe hai, baad mein karti hoon",
+                    "Beta network nahi aa raha, wait karo",
+                    "Beti aa gayi, baad mein baat karti hoon"
+                ])
+            elif 'student' in persona_lower:
+                return random.choice([
+                    "Bro give me 5 mins, busy right now",
+                    "Network is bad, wait a bit",
+                    "App is not working, let me try later",
+                    "My friend is here, will do it in a bit"
+                ])
+            elif 'worried' in persona_lower:
+                return random.choice([
+                    "Ji sir 5 minute rukiye, abhi busy hoon",
+                    "Sir network issue hai, thoda wait kariye",
+                    "Ji sir baad mein karta hoon",
+                    "Abhi office mein hoon sir, baad mein karenge"
+                ])
+            else:  # techsavvy
+                return random.choice([
+                    "Give me some time, checking the details",
+                    "Network is unstable, will ping you soon",
+                    "Let me verify this first, need a few minutes",
+                    "In a meeting now, will respond shortly"
+                ])
