@@ -106,6 +106,16 @@ class EnhancedScamClassifier:
                         "cod", "shipment", "fedex", "dhl", "parcel",
                         "order delivery", "airway bill"],
             "weight": 1.0
+        },
+        
+        "urgency_threat": {
+            "keywords": ["urgent", "immediately", "asap", "right now", "hurry",
+                        "deadline", "expires", "limited time", "final warning",
+                        "last chance", "act now", "within minutes", "within hours",
+                        "consequences", "freeze", "suspend", "terminate",
+                        "permanent", "irreversible", "lose access", "blocked forever",
+                        "reported to authorities", "legal consequences"],
+            "weight": 0.9  # Slightly lower since it's a supporting indicator
         }
     }
     
@@ -123,6 +133,7 @@ class EnhancedScamClassifier:
         "bill_payment": "worried",     # Worried about bills
         "romance": "aunty",            # Aunty lonely/social ✨ NEW
         "delivery": "worried",         # Worried about package
+        "urgency_threat": "worried",    # Worried about threats/deadlines
         "unknown": "uncle"             # Default to Uncle
     }
     
@@ -242,11 +253,12 @@ class EnhancedScamClassifier:
             "job_offer": "Job offer/work-from-home scam",
             "prize_lottery": "Prize/lottery winner scam",
             "bill_payment": "Bill payment/service suspension scam",
-            "romance": "Romance/friendship scam",
-            "delivery": "Package delivery scam",
-            "unknown": "Unknown scam type"
+            "romance": "romance/friendship scam",
+            "delivery": "fake delivery/package scam",
+            "urgency_threat": "urgency/time-pressure scam",
+            "unknown": "suspicious message"
         }
-        return descriptions.get(scam_type, "Unknown")
+        return descriptions.get(scam_type, "unknown scam type")
 
 
 # Global classifier instance
