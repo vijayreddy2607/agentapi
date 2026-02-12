@@ -18,16 +18,17 @@ class ScamDetector:
     
     def __init__(self):
         self.safe_patterns = [
+            # CRITICAL: Only match EXACT greetings with nothing after them
+            # This prevents catching "Hi, this is SBI support..." scams
             r"^(hi|hello|hey|good morning|good evening|good afternoon|sup|yo)[.!]?$",
             r"^(hi|hello|hey)[,]? (how are you|how do you do|what's up)\??$",
             r"^who are you\??$",
             r"^nice to meet you[.]?$",
             r"^how are you\??$",
             r"^safe$", # For testing
-            r"^government advisory.*",  # Ignore official warnings
-            r"^cybercrime.*", # Official cybercrime warnings
-            r".*received.*from.*@upi.*", # UPI money RECEIVED is always safe
-            r".*credited.*to.*a/c.*", # Bank credits are safe
+            # REMOVED: Government advisory patterns - too broad, catches impersonation scams
+            # REMOVED: UPI received pattern - creates blind spot for refund scams
+            # Refund scams say "You received Rs500 from xyz@upi, return it via link"
         ]
 
     async def detect(self, message_text: str, conversation_history: list = None) -> ScamDetection:
@@ -91,18 +92,20 @@ class ScamDetector:
             "reasoning": "short explanation"
         }
         
-        Rules:
-        1. SCAM: Asking for money/OTP/bank details/clicking links from UNKNOWN/OFFICIAL-LOOKING sources.
-        2. SCAM: "Digital Arrest", "Customs Duty", "Lottery", "Easy Job with UPFRONT FEE", "Crypto Returns".
-        3. SCAM if job offer asks for PAYMENT (training fee, verification fee, etc.).
-        4. SCAM: "Virtual Arrest" or "Video Inquiry" is ALWAYS SCAM (Real police/CBI do not do video calls).
-        5. SCAM: "Money Received" + "Return via Link" is ALWAYS SCAM (Real refunds don't need links).
-        6. SAFE: Standard bank ALERTS (Credited/Debited/Bill Due) without suspicious links.
-        7. SAFE: Transactions RECEIVED (Money coming IN is safe) WITHOUT asking to return it.
-        8. SAFE: Personal messages from known contacts (Mom, Dad, Brother) asking for small amounts/groceries.
-        9. SAFE: Legitimate interview invitations from KNOWN companies (TCS, Infosys, Wipro) WITHOUT asking for money.
-        10. SAFE: Normal conversation ("How are you?", "Tell me a joke").
-        11. If unsure -> confidence < 0.5.
+        Rules (in priority order):
+        1. SCAM: Greetings followed by bank/authority impersonation ("Hi, this is SBI support...", "Hello, I'm calling from RBI...") - ALWAYS SCAM.
+        2. SCAM: "Money received" + ANY request to return/refund/click link is ALWAYS SCAM (Real refunds don't need links or phone calls).
+        3. SCAM: Asking for money/OTP/bank details/clicking links from UNKNOWN/OFFICIAL-LOOKING sources.
+        4. SCAM: "Digital Arrest", "Customs Duty", "Lottery", "Easy Job with UPFRONT FEE", "Crypto Returns".
+        5. SCAM if job offer asks for PAYMENT (training fee, verification fee, etc.).
+        6. SCAM: "Virtual Arrest" or "Video Inquiry" is ALWAYS SCAM (Real police/CBI do not do video calls).
+        7. SAFE: Standard bank ALERTS (Credited/Debited/Bill Due) without suspicious links or urgency.
+        8. SAFE: Transactions RECEIVED (Money coming IN) with NO request to act/return/click.
+        9. SAFE: Personal messages from known contacts (Mom, Dad, Brother) asking for small amounts/groceries.
+        10. SAFE: Legitimate interview invitations from KNOWN companies (TCS, Infosys, Wipro) WITHOUT asking for money.
+        11. SAFE: Normal conversation ("How are you?", "Tell me a joke") with NO urgency or suspicious elements.
+        12. If unsure -> confidence < 0.5.
+
         """
         
         messages = [
@@ -111,19 +114,7 @@ class ScamDetector:
         ]
 
         try:
-            # 1. Try Gemini First (Primary - Higher Intelligence)
-            try:
-                from app.utils.llm_client import GeminiLLMClient
-                gemini_client = GeminiLLMClient()
-                if gemini_client.api_key:
-                    logger.info("🤖 Verifying with Gemini 1.5 Pro...")
-                    response_text = await gemini_client.ainvoke(messages)
-                    if response_text:
-                         return self._parse_llm_response(response_text)
-            except Exception as e:
-                logger.warning(f"⚠️ Gemini detection failed: {e}. Falling back to Groq...")
-
-            # 2. Fallback to Groq (Fast & Reliable)
+            # Use Groq for LLM verification (Fast & Reliable)
             logger.info("⚡ Verifying with Groq Llama-3...")
             response_text = await llm_client.ainvoke(messages)
             return self._parse_llm_response(response_text)

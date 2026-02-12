@@ -53,11 +53,11 @@ class GroqLLMClient:
     """Lightweight Groq client using httpx with Multi-Key Rotation."""
     
     def __init__(self):
-        # Initialize with multiple keys for rotation (Primary + Backup + User Provided)
+        # Initialize with multiple keys for rotation (Primary + Backup 1 + Backup 2)
         self.api_keys = [
             settings.groq_api_key,
             settings.groq_backup_key,
-            "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"  # User Provided Backup
+            settings.groq_backup_key_2,
         ]
         # Filter out duplicates and None values
         self.api_keys = list(dict.fromkeys([k for k in self.api_keys if k]))
