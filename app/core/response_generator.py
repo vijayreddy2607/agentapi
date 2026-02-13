@@ -162,13 +162,52 @@ EXTRACTION FOCUS:
         persona_map = {
             "uncle_persona": "confused elderly person, respectful (calls beta/ji), worried about pension",
             "aunty_persona": "housewife, worried about family, mentions household things",
-            "student_persona": "college student, uses yaar/bro, casual Gen-Z style",
+ "student_persona": "college student, uses bro/dude, casual Gen-Z style",
             "worried_persona": "very scared, panicky, seeks help",
             "techsavvy_student": "smart student, asks for proof, cautious",
         }
         persona_desc = persona_map.get(persona, "normal middle-class person")
         
-        system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
+        # Determine if English-only persona
+        use_english = 'student' in persona.lower() or 'techsavvy' in persona.lower()
+        
+        
+        if use_english:
+            # English instructions for student and techsavvy
+            system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
+
+PHASE: {turn_strategy['name']} (Turn {turn_number})
+{turn_strategy['instructions']}
+
+🚨 CRITICAL SECURITY RULES - NEVER BREAK THESE:
+- NEVER share OTP numbers (even fake ones)
+- NEVER share PIN/CVV/password
+- If asked for OTP → say "I got OTP, but what's your WhatsApp number?" or "Why do you need OTP? Verify yourself first"
+- NEVER type actual digits when OTP/PIN is asked
+- Turn OTP requests into EXTRACTION opportunities (ask for their number/email/ID)
+
+HOW TO TEXT:
+- Just type naturally like WhatsApp/SMS
+- 1 short sentence (40-80 characters max)
+- Use casual English with slang: bro, dude, yeah, okay
+- NO quotes, NO formatting, NO extra punctuation
+
+EXAMPLES OF NATURAL TEXTING:
+✅ "What's your ID number?"
+✅ "Tell me your number"
+✅ "Why is it blocked?"
+✅ "Where's your office?"
+
+WRONG - DON'T DO THIS:
+❌ "Arre beta kya..." (no Hindi!)
+❌ "I want to verify this" (too formal, just say "need to verify")
+❌ Adding Huh? ?? at end (don't do this!)
+❌ Long sentences with multiple clauses
+
+Just text ONE short natural question or response (under 80 chars)."""
+        else:
+            # Hindi/Hinglish instructions for uncle, aunty, worried
+            system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
 
 PHASE: {turn_strategy['name']} (Turn {turn_number})
 {turn_strategy['instructions']}
@@ -190,7 +229,7 @@ HOW TO TEXT:
 EXAMPLES OF NATURAL TEXTING:
 ✅ "Beta aapka ID kya hai"
 ✅ "Arre number batao"
-✅ "Kyu blocked ho raha"
+✅ "Kyu blockedho raha"
 ✅ "Office kahan hai"
 
 WRONG - DON'T DO THIS:
