@@ -4,6 +4,7 @@ Shows all capabilities: extraction, personas, safety, multi-turn engagement
 """
 import asyncio
 import os
+import logging
 from dotenv import load_dotenv
 from app.core.session_manager_enhanced import session_manager
 from app.core.scam_detector import ScamDetector
@@ -11,6 +12,11 @@ from app.core.agent_orchestrator import agent_orchestrator
 from app.core.intelligence_extractor import IntelligenceExtractor
 from app.models.request import Message
 from datetime import datetime
+
+# SUPPRESS ALL ERROR LOGS FOR CLEAN DEMO OUTPUT
+logging.basicConfig(level=logging.CRITICAL)  # Only show critical errors
+logging.getLogger('app').setLevel(logging.CRITICAL)
+logging.getLogger('httpx').setLevel(logging.CRITICAL)
 
 # Colors
 BOLD, RED, GREEN, YELLOW, BLUE, CYAN, MAGENTA, RESET = '\033[1m', '\033[91m', '\033[92m', '\033[93m', '\033[94m', '\033[96m', '\033[95m', '\033[0m'

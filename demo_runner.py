@@ -3,9 +3,15 @@ import sys
 import time
 import os
 import re
+import logging
 from app.core.scam_detector import ScamDetector
 from app.core.response_generator import ResponseGenerator
 from dotenv import load_dotenv
+
+# SUPPRESS ERROR LOGS FOR CLEAN DEMO OUTPUT
+logging.basicConfig(level=logging.CRITICAL)
+logging.getLogger('app').setLevel(logging.CRITICAL)
+logging.getLogger('httpx').setLevel(logging.CRITICAL)
 
 # Load API keys
 load_dotenv()
