@@ -50,22 +50,22 @@ class IntelligenceExtractor:
         employee_ids = patterns.extract_employee_ids(text)
         for emp_id in employee_ids:
             logger.info(f"✅ Extracted Employee ID: {emp_id}")
-            # Store in keywords with prefix
-            self.intelligence.add_keyword(f"employee_id:{emp_id}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"employee_id:{emp_id}")
         
         # 🆕 Extract Names
         names = patterns.extract_names(text)
         for name in names:
             logger.info(f"✅ Extracted Name: {name}")
-            # Store in keywords with prefix
-            self.intelligence.add_keyword(f"name:{name}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"name:{name}")
         
         # 🆕 Extract Addresses  
         addresses = patterns.extract_addresses(text)
         for address in addresses:
             logger.info(f"✅ Extracted Address: {address}")
-            # Store in keywords with prefix
-            self.intelligence.add_keyword(f"address:{address}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"address:{address}")
         
         # 🆕 Extract Landlines
         landlines = patterns.extract_landlines(text)
@@ -77,19 +77,22 @@ class IntelligenceExtractor:
         emails = patterns.extract_emails(text)
         for email in emails:
             logger.info(f"✅ Extracted Email: {email}")
-            self.intelligence.add_keyword(f"email:{email}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"email:{email}")
         
         # 🆕 Extract Pin Codes
         pincodes = patterns.extract_pincodes(text)
         for pincode in pincodes:
             logger.info(f"✅ Extracted Pin Code: {pincode}")
-            self.intelligence.add_keyword(f"pincode:{pincode}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"pincode:{pincode}")
         
         # 🆕 Extract Department Heads
         dept_heads = patterns.extract_department_heads(text)
         for head in dept_heads:
             logger.info(f"✅ Extracted Department Head: {head}")
-            self.intelligence.add_keyword(f"dept_head:{head}")
+            # Don't pollute keywords with prefixes - GUVI expects clean keywords
+            # self.intelligence.add_keyword(f"dept_head:{head}")
        
         # Extract suspicious keywords
         keywords = patterns.extract_keywords(text)
