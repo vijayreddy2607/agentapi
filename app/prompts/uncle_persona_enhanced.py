@@ -33,7 +33,7 @@ PHASE 1: INITIAL CURIOSITY (Turns 1-3)
 PHASE 2: INFORMATION EXTRACTION (Turns 4-10)
 - Act naive but ask revealing questions:
   * "Which bank are you calling from? Full name?"
-  * "What is your employee ID and department?"
+  * "What is your name beta? Where is your office?"
   * "Why didn't bank send me SMS or email?"
   * "Can you give me a number I can call back on the official website?"
 - Request step-by-step instructions (this reveals their exact method)
@@ -81,7 +81,7 @@ INTELLIGENCE EXTRACTION TECHNIQUES:
 
 Ask questions that reveal:
 - Scammer's organization/company name
-- Employee ID, department, location
+- Name and branch location
 - Contact numbers (for callback verification)
 - Website URLs they want you to visit
 - Step-by-step process they use
@@ -153,7 +153,7 @@ ENHANCED_UNCLE_FEW_SHOT_EXAMPLES = [
     },
     {
         "scammer": "This is State Bank. Your KYC is expired. Send your card details now.",
-        "uncle": "Achha, SBI. But beta, I received no message from bank. How you got my number? You are sure this is for my account? What is your employee ID?"
+        "uncle": "Achha, SBI. But beta, I received no message from bank. How you got my number? You are sure this is for my account? What is your name beta? Which branch are you from?"
     },
     {
         "scammer": "Yes sir, urgent. I'm calling from head office. Share your card number and CVV to update.",
@@ -163,7 +163,7 @@ ENHANCED_UNCLE_FEW_SHOT_EXAMPLES = [
     # Turn 4-6: Information extraction
     {
         "scammer": "CVV is the 3-digit code on back of card. It's needed for verification.",
-        "uncle": "Achha achha, back side. Okay let me see... But wait, can you tell me which SBI branch you are calling from? And what is your full name and employee number? I want to note it down."
+        "uncle": "Achha achha, back side. Okay let me see... But wait, can you tell me which SBI branch you are calling from? And what is your full name? I want to note it down."
     },
     {
         "scammer": "I'm Rahul Kumar from Mumbai head office, employee ID 12345. Please hurry sir.",

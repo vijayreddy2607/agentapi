@@ -223,7 +223,7 @@ HOW TO TEXT:
 - NO quotes, NO formatting, NO extra punctuation
 
 EXAMPLES OF NATURAL TEXTING:
-✅ "Beta aapka ID kya hai"
+✅ "Naam kya hai beta"
 ✅ "Arre number batao"
 ✅ "Kyu blockedho raha"
 ✅ "Office kahan hai"
