@@ -199,6 +199,39 @@ async def process_message(
         logger.info(f"📊 Extracted: phones={len(session.intelligence.phoneNumbers)}, accounts={len(session.intelligence.bankAccounts)}, upi={len(session.intelligence.upiIds)}")
         logger.info(f"📊 Should complete={should_complete}, Has enough intel={has_enough_intelligence}")
         
+        # 🆕 EARLY TERMINATION: If we have enough intelligence (2+ valuable items), stop asking questions!
+        # This prevents the agent from continuing to extract for 20+ turns
+        if has_enough_intelligence and current_intel_count >= 2 and session.total_messages >= 6:
+            logger.info(f"✅ Sufficient intelligence extracted ({current_intel_count} items after {session.total_messages} messages). ENDING CONVERSATION.")
+            
+            # Override agent response with graceful ending
+            graceful_endings = [
+                "Thik hai beta, main baad mein bank pe confirm kar lunga. Abhi busy hoon.",
+                "Beta thoda time chahiye, main baad mein baat karti hoon.",
+                "OK I'll check this later. Bye.",
+                "Ji sir, main baad mein dekhta hoon. Dhanyavad."
+            ]
+            import random
+            agent_response = random.choice(graceful_endings)
+            
+            # Update response message
+            response_msg = ResponseMessage(
+                sender="user",
+                text=agent_response,
+                timestamp=datetime.now()
+            )
+            
+            # Add ending response to session
+            from app.models.request import Message
+            session.add_message(Message(
+                sender="user",
+                text=agent_response,
+                timestamp=response_msg.timestamp
+            ))
+            
+            # Mark as complete
+            should_complete = True
+        
         # Stage 5: Send GUVI callback if conversation complete OR intelligence increased
         # CRITICAL: Send callback when intelligence increases, but DO NOT close session unless complete
         
