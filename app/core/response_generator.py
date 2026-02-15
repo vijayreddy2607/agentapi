@@ -56,40 +56,36 @@ EXTRACTION FOCUS:
         },
         
         "6-9": {
-            "name": "IDENTITY & MULTIPLES EXTRACTION",
+            "name": "NATURAL QUESTIONING",
             "instructions": """
-PHASE 3: Extract scammer IDENTITY & ask for MULTIPLES.
-- "Aapka employee ID aur naam kya hai?"
-- "Department head ka naam batao?"
-- "Company registration number kya hai?"
-- "Office ka full address do, pin code ke saath?"
-- "Landline number kya hai office ka?"
-- "Backup contact number? Emergency case ke liye?"
+PHASE 3: Ask NATURAL confused questions (not obvious extraction!).
+- "Aapka naam kya hai?"
+- "Company/Bank ka naam?"
+- "Kahan se call kar rahe ho?"
+- "Number kya hai aapka?"
+- "Correct hai na ye?"
 
 EXTRACTION FOCUS:
-- ✅ Employee ID + Name: "ID aur full name batao"
-- ✅ Multiple phones: "Backup number bhi de do ji"
-- ✅ Landline: "Office landline kya hai?"
-- ✅ Address + Pincode: "Pin code kya hai? Landmark?"
+- ✅ Names: "Aapka naam batao?"
+- ✅ Phone: "Number do contact ke liye"
+- ✅ Company: "Company/Bank ka naam?"
+- ❌ DON'T ask: Employee ID, full address with pincode (too obvious!)
 """
         },
         
         "10-12": {
-            "name": "LOCATION & SUPERVISOR EXTRACTION",
+            "name": "NATURAL SKEPTICISM",
             "instructions": """
-PHASE 4: Extract LOCATION details & supervisor hierarchy.
-- "Aapka branch exact kahan hai?"
-- "Supervisor ka naam aur number kya hai?"
-- "Local WhatsApp number hai kya office ka?"
-- "Email ID kya hai complaint ke liye?"
-- "Pin code confirm kar doon location ka?"
-- "Nearest landmark kya hai branch ke paas?"
+PHASE 4: Show natural doubt and ask simple verification questions.
+- "Beta check kar loon kya?"
+- "Thik hai, wait karo"
+- "Number aur naam confirm kar loon?"
+- "Bank pe confirm kar loon?"
 
 EXTRACTION FOCUS:
-- ✅ Supervisor details: "Boss ka naam aur number?"
-- ✅ WhatsApp number: "WhatsApp pe baat kar sakte hain?"
-- ✅ Pin codes: "Area ka pin code kya hai?"
-- ✅ Landmarks: "Nearest landmark batao"
+- ✅ Re-confirm: "Number phir se batao?"
+- ✅ Simple verification: "Naam kya tha?"
+- ❌ DON'T ask for: Supervisor, pin codes, landmarks (too systematic!)
 """
         },
         
@@ -725,42 +721,42 @@ Analysis Rules:
                     "Give me your WhatsApp number"
                 ])
         
-        # TURN 7-10: Extract Credentials
+        # TURN 7-10: Natural Confusion (Don't obviously extract!)
         elif turn_number <= 10:
             if 'uncle' in persona_lower:
                 return random.choice([
-                    "Aapka employee ID kya hai beta?",
-                    "Office address kya hai pin code ke saath?",
-                    "Manager ka naam batao ji",
-                    "Department head kaun hai?"
+                    "Beta samajh nahi aaya properly, thoda explain karo",
+                    "Aapka naam kya tha beta?",
+                    "Bank ka naam confirm kar loon?",
+                    "Beta kahan se call kar rahe ho?"
                 ])
             elif 'aunty' in persona_lower:
                 return random.choice([
-                    "Beta aapka employee ID batao",
-                    "Office ka full address kya hai?",
-                    "Aapke manager ka number kya hai beta?",
-                    "Company registration number bhejo"
+                    "Beta thoda confusion ho rahi hai",
+                    "Aapka naam phir se batao beta",
+                    "Company ka naam kya hai?",
+                    "Beta kahan ka office hai aapka?"
                 ])
             elif 'student' in persona_lower:
                 return random.choice([
-                    "What's your employee ID?",
-                    "Full office address with pin code?",
-                    "Who's your manager?",
-                    "Send me your company registration details"
+                    "Wait I didn't get that clearly",
+                    "What's your name again?",
+                    "Which company did you say?",
+                    "Where are you calling from?"
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Ji sir aapka employee ID kya hai?",
-                    "Office ka complete address chahiye sir",
-                    "Senior officer ka naam batao",
-                    "Department ID number kya hai?"
+                    "Ji sir samajh nahi aaya",
+                    "Aapka naam kya hai sir?",
+                    "Department ka naam batao sir",
+                    "Sir kahan se call kar rahe ho?"
                 ])
             else:  # techsavvy
                 return random.choice([
-                    "What's your employee ID number?",
-                    "Full registered office address?",
-                    "Who's your reporting manager?",
-                    "Company registration or license number?"
+                    "Can you repeat that?",
+                    "What's your name?",
+                    "Which department are you from?",
+                    "Where's your office located?"
                 ])
         
         # TURN 11+: Delay Tactics
