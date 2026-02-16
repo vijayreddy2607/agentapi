@@ -1,0 +1,17 @@
+"""
+Final persona simplification: Remove all "Employee ID", "Badge Number", "Office Address" questions.
+Keep ONLY simple questions: Name, Phone, UPI ID, Bank Account, Company Name.
+
+This matches commit 111b517's approach for better extraction.
+"""
+
+# Changes to make:
+# 1. angry_persona.py - Remove "Employee ID" → Replace with "Naam kya hai?"
+# 2. aunty_persona.py - Remove "employee ID" → Replace with "naam?  
+# 3. student_persona.py - Remove "employee ID" → Replace with "name?"
+# 4. worried_persona.py - Remove "employee ID/badge number" → Replace with "name?"
+
+print("Apply these manual changes:")
+print("1. Search for 'Employee ID' or 'employee ID' or 'Badge number'")
+print("2. Replace with simple: 'Name?' or 'Naam?' or 'Full name?'")
+print("3. Remove 'Office address' → Replace with 'Company name?'")
