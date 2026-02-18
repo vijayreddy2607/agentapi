@@ -156,16 +156,22 @@ async def process_message(
             rl_action = session_manager.get_rl_action(session, request.message.text)
             logger.info(f"🧠 RL Agent selected strategy: {rl_action}")
         
-        # Stage 3: Generate Agent Response
+        # Stage 3: Generate Agent Response (multi-agent pipeline)
         if session.scam_detected:
-            agent_response = await agent_orchestrator.generate_response(
+            agent_response, intel_log = await agent_orchestrator.generate_response(
                 session=session,
                 scammer_message=request.message.text,
                 conversation_history=history_dict,
                 rl_action=rl_action  # Pass RL action to agent
             )
+            # Attach intelligence log to session for tracking
+            if not hasattr(session, 'intelligence_logs'):
+                session.intelligence_logs = []
+            session.intelligence_logs.append(intel_log)
+            logger.info(f"[INTELLIGENCE_LOG] Turn {session.total_messages}: {intel_log}")
         else:
             agent_response = "I'm not interested."
+            intel_log = None
         
         # Create response message
         response_msg = ResponseMessage(
@@ -224,7 +230,8 @@ async def process_message(
                 scam_detected=session.scam_detected,
                 total_messages=session.total_messages,
                 intelligence_dict=session.intelligence.to_dict(),
-                agent_notes=agent_notes
+                agent_notes=agent_notes,
+                engagement_duration_seconds=session.get_engagement_duration()
             )
             
             # Only mark complete if conversation is actually over
@@ -266,10 +273,11 @@ async def process_message(
             session
         )
         
-        # Build GUVI-compliant simple response
+        # Build GUVI-compliant simple response (with optional intelligence_log)
         return GUVISimpleResponse(
             status="success",
-            reply=response_msg.text
+            reply=response_msg.text,
+            intelligence_log=intel_log  # Attach for evaluation; excluded if None
         )
     
     except Exception as e:

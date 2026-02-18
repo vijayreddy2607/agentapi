@@ -6,6 +6,10 @@ from app.agents.techsavvy_agent import TechSavvyAgent
 from app.agents.aunty_agent import AuntyAgent
 from app.agents.student_agent import StudentAgent
 
+# Note: IntelligenceAnalystAgent and ConversationDirectorAgent are NOT imported here
+# to avoid circular imports (they don't depend on BaseAgent and are imported directly
+# from their modules in agent_orchestrator.py)
+
 __all__ = [
     "BaseAgent",
     "UncleAgent",
@@ -14,3 +18,4 @@ __all__ = [
     "AuntyAgent",
     "StudentAgent",
 ]
+
