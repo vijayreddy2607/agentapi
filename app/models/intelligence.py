@@ -6,9 +6,10 @@ from typing import Literal
 class Intelligence(BaseModel):
     """Accumulated intelligence from conversations."""
     bankAccounts: set[str] = Field(default_factory=set)
-    upiIds: set[str] = Field(default_factory=set)  # Fixed typo: was 'upilds'
+    upiIds: set[str] = Field(default_factory=set)
     phishingLinks: set[str] = Field(default_factory=set)
     phoneNumbers: set[str] = Field(default_factory=set)
+    emailAddresses: set[str] = Field(default_factory=set)
     suspiciousKeywords: set[str] = Field(default_factory=set)
     
     def add_bank_account(self, account: str):
@@ -27,6 +28,10 @@ class Intelligence(BaseModel):
     def add_phone_number(self, phone: str):
         """Add a phone number to intelligence."""
         self.phoneNumbers.add(phone)
+
+    def add_email_address(self, email: str):
+        """Add an email address to intelligence."""
+        self.emailAddresses.add(email.lower())
     
     def add_keyword(self, keyword: str):
         """Add a suspicious keyword to intelligence."""
@@ -36,9 +41,10 @@ class Intelligence(BaseModel):
         """Convert to dictionary with lists instead of sets."""
         return {
             "bankAccounts": list(self.bankAccounts),
-            "upiIds": list(self.upiIds),  # Fixed typo: was 'upilds'
+            "upiIds": list(self.upiIds),
             "phishingLinks": list(self.phishingLinks),
             "phoneNumbers": list(self.phoneNumbers),
+            "emailAddresses": list(self.emailAddresses),
             "suspiciousKeywords": list(self.suspiciousKeywords)
         }
     
@@ -62,7 +68,8 @@ class Intelligence(BaseModel):
             len(self.bankAccounts) +
             len(self.upiIds) +
             len(self.phishingLinks) +
-            len(self.phoneNumbers)
+            len(self.phoneNumbers) +
+            len(self.emailAddresses)
         )
     
     def predict_bank_names(self) -> list[str]:

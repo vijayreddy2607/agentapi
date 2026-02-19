@@ -77,8 +77,7 @@ class IntelligenceExtractor:
         emails = patterns.extract_emails(text)
         for email in emails:
             logger.info(f"✅ Extracted Email: {email}")
-            # Don't pollute keywords with prefixes - GUVI expects clean keywords
-            # self.intelligence.add_keyword(f"email:{email}")
+            self.intelligence.add_email_address(email)  # ← STORE IT!
         
         # 🆕 Extract Pin Codes
         pincodes = patterns.extract_pincodes(text)
@@ -103,6 +102,17 @@ class IntelligenceExtractor:
         
         return self.intelligence
     
+    def extract_from_history(self, conversation_history: list) -> 'Intelligence':
+        """
+        Extract intelligence from ALL messages in conversation history.
+        Catches data that may have been missed in earlier turns.
+        """
+        for msg in conversation_history:
+            text = msg.get("text", "") if isinstance(msg, dict) else getattr(msg, "text", "")
+            if text:
+                self.extract_from_message(text)
+        return self.intelligence
+
     def get_intelligence(self) -> Intelligence:
         """Get accumulated intelligence."""
         return self.intelligence

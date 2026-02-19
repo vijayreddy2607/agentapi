@@ -127,10 +127,20 @@ PAYMENT_APPS = [
 
 
 def extract_upi_ids(text: str) -> list[str]:
-    """Extract UPI IDs from text."""
+    """Extract UPI IDs from text.
+    UPI IDs: word@bankhandle (no dots in domain part, e.g. @ybl @oksbi @fakebank)
+    Emails: word@domain.tld (has dots, e.g. @gmail.com @fake-amazon-deals.com)
+    """
     matches = UPI_PATTERN.findall(text.lower())
-    # Filter out email addresses (basic check)
-    return [m for m in matches if not any(d in m for d in ['gmail', 'yahoo', 'outlook', 'hotmail'])]
+    upi_ids = []
+    for m in matches:
+        # UPI IDs have NO dot in the part after @
+        # Emails have a dot in the domain (e.g. .com, .in)
+        at_pos = m.rfind('@')
+        domain_part = m[at_pos+1:] if at_pos >= 0 else ''
+        if '.' not in domain_part:  # No dot = UPI ID, not email
+            upi_ids.append(m)
+    return list(set(upi_ids))
 
 
 def extract_bank_accounts(text: str) -> list[str]:
@@ -248,10 +258,15 @@ def extract_landlines(text: str) -> list[str]:
 
 
 def extract_emails(text: str) -> list[str]:
-    """Extract email addresses."""
+    """Extract email addresses (NOT UPI IDs)."""
     matches = EMAIL_PATTERN.findall(text)
-    # Filter out UPI IDs (they use @bank format)
-    emails = [m for m in matches if not any(bank in m.lower() for bank in ['paytm', 'ybl', 'upi', 'oksbi', 'okaxis'])]
+    emails = []
+    for m in matches:
+        # Emails MUST have a dot in the domain part (e.g. .com, .in, .co.in)
+        at_pos = m.rfind('@')
+        domain_part = m[at_pos+1:] if at_pos >= 0 else ''
+        if '.' in domain_part:  # Has dot = real email, not UPI
+            emails.append(m.lower())
     return list(set(emails))
 
 

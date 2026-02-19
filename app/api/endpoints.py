@@ -202,7 +202,7 @@ async def process_message(
         
         # VERBOSE LOGGING FOR DEBUGGING
         logger.info(f"📊 Intelligence Check: count={current_intel_count}, threshold={settings.min_intelligence_items}")
-        logger.info(f"📊 Extracted: phones={len(session.intelligence.phoneNumbers)}, accounts={len(session.intelligence.bankAccounts)}, upi={len(session.intelligence.upiIds)}")
+        logger.info(f"📊 Extracted: phones={len(session.intelligence.phoneNumbers)}, accounts={len(session.intelligence.bankAccounts)}, upi={len(session.intelligence.upiIds)}, emails={len(session.intelligence.emailAddresses)}")
         logger.info(f"📊 Should complete={should_complete}, Has enough intel={has_enough_intelligence}")
         
         # Stage 5: Send GUVI callback if conversation complete OR intelligence increased
@@ -218,6 +218,14 @@ async def process_message(
                  logger.info(f"Session {request.sessionId} has {current_intel_count} items - sending INTERMEDIATE GUVI callback")
             
             agent_notes = agent_orchestrator.get_agent_notes(session)
+            
+            # Re-scan full conversation history to catch any missed intelligence
+            from app.core.intelligence_extractor import IntelligenceExtractor
+            history_extractor = IntelligenceExtractor()
+            history_extractor.intelligence = session.intelligence  # Use same object
+            history_dict_full = [{"text": m.text, "sender": m.sender} for m in session.conversation_history]
+            history_extractor.extract_from_history(history_dict_full)
+            logger.info(f"📊 After history re-scan: phones={len(session.intelligence.phoneNumbers)}, accounts={len(session.intelligence.bankAccounts)}, upi={len(session.intelligence.upiIds)}, emails={len(session.intelligence.emailAddresses)}, links={len(session.intelligence.phishingLinks)}")
             
             # Add bank predictions to notes
             bank_predictions = session.intelligence.predict_bank_names()
