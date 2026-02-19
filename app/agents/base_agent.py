@@ -52,7 +52,24 @@ class BaseAgent(ABC):
         (r'\bKahan\b', 'where'),
         (r'\bkahan\b', 'where'),
         # Hindi verbs that leak as dangling words
-        (r'\bdo\?', 'give?'),   # 'do' = 'give' in Hindi imperative — replace to make grammatical sense
+        (r'\bdo\?', 'give?'),   # 'do' = 'give' in Hindi imperative
+        # Additional Hinglish escaping from persona prompts and aunty agent
+        (r'\bHayy\b', 'Wow'),
+        (r'\bhayy\b', 'wow'),
+        (r'\bArey\b', 'Oh'),
+        (r'\barey\b', 'oh'),
+        (r'\bMain\b', 'I'),
+        (r'\bmain\b', 'I'),
+        (r'\btoh\b', ''),
+        (r'\bse hoon\b', 'am from'),
+        (r'\bWah\b', 'Great'),
+        (r'\bwah\b', 'great'),
+        (r'HAANJI[^!]*!', 'Yes!'),   # Catch HAANJI AUNTYJI! pattern
+        (r'\bkarunga\b', 'will do'),
+        (r'\bAbhi\b', 'Right now'),
+        (r'\babhi\b', 'right now'),
+        (r'\bSuno\b', 'Listen'),
+        (r'\bsuno\b', 'listen'),
     ]
     
     @staticmethod
@@ -462,9 +479,13 @@ class BaseAgent(ABC):
         - Red Flag Identification: 8 pts for ≥5 flags, 5 pts for ≥3, 2 pts for ≥1
         - agentNotes field itself: 1 pt Response Structure
         """
-        # Collect all conversation text for analysis
+        # FIX: conversation_memory stores dicts with 'scammer' and 'agent' keys, NOT 'text'
+        # Previously used m.get('text') which always returned '' — killing all red flag detection
         all_text = " ".join(
-            m.get("text", "") if isinstance(m, dict) else getattr(m, "text", "")
+            " ".join([
+                m.get("scammer", ""),
+                m.get("agent", ""),
+            ]) if isinstance(m, dict) else getattr(m, "text", "")
             for m in self.conversation_memory
         ).lower()
 

@@ -283,7 +283,7 @@ EXTRACTION FOCUS:
                     system_prompt=system_prompt,
                     user_message=user_message,
                     temperature=temperature,
-                    max_tokens=60  # Increased from 35 — ensures questions are never cut off mid-sentence
+                    max_tokens=80  # Increased to 80 — ensures complete questions, no mid-sentence cut-off
                 ),
                 timeout=4.8
             )
