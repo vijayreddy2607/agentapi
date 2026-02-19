@@ -93,6 +93,24 @@ OFFICE_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# 🆕 CASE ID PATTERN: Case/Reference/Ticket/Complaint/Incident IDs
+CASE_ID_PATTERN = re.compile(
+    r'\b(?:case|ref(?:erence)?|ticket|complaint|incident|claim|request)\s*(?:id|no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{3,19})\b',
+    re.IGNORECASE
+)
+
+# 🆕 POLICY NUMBER PATTERN: Insurance/policy numbers
+POLICY_NUMBER_PATTERN = re.compile(
+    r'\b(?:policy|pol)\s*(?:no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{3,19})\b',
+    re.IGNORECASE
+)
+
+# 🆕 ORDER NUMBER PATTERN: Order/transaction/booking IDs
+ORDER_NUMBER_PATTERN = re.compile(
+    r'\b(?:order|ord|transaction|txn|booking|invoice)\s*(?:id|no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{3,19})\b',
+    re.IGNORECASE
+)
+
 # Suspicious Keywords
 SCAM_KEYWORDS = [
     # Urgency
@@ -308,7 +326,6 @@ def extract_department_heads(text: str) -> list[str]:
     return list(set(matches))
 
 
-
 def extract_keywords(text: str) -> list[str]:
     """Extract suspicious keywords from text."""
     text_lower = text.lower()
@@ -324,3 +341,22 @@ def extract_keywords(text: str) -> list[str]:
             found_keywords.append(app)
     
     return list(set(found_keywords))  # Remove duplicates
+
+
+def extract_case_ids(text: str) -> list[str]:
+    """Extract case/reference/ticket/complaint IDs from scammer messages."""
+    matches = CASE_ID_PATTERN.findall(text)
+    # Filter out pure digits that are likely phone numbers or accounts
+    return list(set(m for m in matches if not m.isdigit() or len(m) < 8))
+
+
+def extract_policy_numbers(text: str) -> list[str]:
+    """Extract insurance/policy numbers from scammer messages."""
+    matches = POLICY_NUMBER_PATTERN.findall(text)
+    return list(set(matches))
+
+
+def extract_order_numbers(text: str) -> list[str]:
+    """Extract order/transaction/booking IDs from scammer messages."""
+    matches = ORDER_NUMBER_PATTERN.findall(text)
+    return list(set(matches))

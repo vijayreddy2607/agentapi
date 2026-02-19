@@ -238,7 +238,9 @@ async def process_message(
                 total_messages=session.total_messages,
                 intelligence_dict=session.intelligence.to_dict(),
                 agent_notes=agent_notes,
-                engagement_duration_seconds=session.get_engagement_duration()
+                engagement_duration_seconds=session.get_engagement_duration(),
+                scam_type=getattr(session, "scam_type", "unknown") or "unknown",
+                confidence_level=getattr(session, "confidence_level", 0.95) or 0.95,
             )
             
             # Only mark complete if conversation is actually over

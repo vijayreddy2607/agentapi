@@ -93,6 +93,24 @@ class IntelligenceExtractor:
             # Don't pollute keywords with prefixes - GUVI expects clean keywords
             # self.intelligence.add_keyword(f"dept_head:{head}")
        
+        # 🆕 Extract Case / Reference IDs (GUVI scoring field)
+        case_ids = patterns.extract_case_ids(text)
+        for cid in case_ids:
+            self.intelligence.add_case_id(cid)
+            logger.info(f"✅ Extracted Case ID: {cid}")
+
+        # 🆕 Extract Policy Numbers (GUVI scoring field)
+        policy_nums = patterns.extract_policy_numbers(text)
+        for pol in policy_nums:
+            self.intelligence.add_policy_number(pol)
+            logger.info(f"✅ Extracted Policy Number: {pol}")
+
+        # 🆕 Extract Order Numbers (GUVI scoring field)
+        order_nums = patterns.extract_order_numbers(text)
+        for oid in order_nums:
+            self.intelligence.add_order_number(oid)
+            logger.info(f"✅ Extracted Order Number: {oid}")
+
         # Extract suspicious keywords
         keywords = patterns.extract_keywords(text)
         for keyword in keywords:
