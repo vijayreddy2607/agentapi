@@ -117,7 +117,7 @@ POLICY_NUMBER_PATTERN = re.compile(
 
 # 🆕 ORDER NUMBER PATTERN: Order/transaction/booking IDs
 ORDER_NUMBER_PATTERN = re.compile(
-    r'\b(?:order|ord|transaction|txn|booking|invoice)\s*(?:id|no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{3,19})\b',
+    r'\b(?:order|ord|transaction|txn|booking|invoice)\s*(?:id|no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{2,18}(?:\d[A-Z0-9\-]*|[A-Z0-9\-]*\d[A-Z0-9\-]*))\b',
     re.IGNORECASE
 )
 
