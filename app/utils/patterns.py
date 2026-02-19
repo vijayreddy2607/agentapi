@@ -26,10 +26,12 @@ URL_PATTERN = re.compile(
 
 # 🆕 OBFUSCATED URL PATTERN: Catches "dot com", "[.]com", "hxxp://", etc.
 # Matches: sbi-secure dot com, example[.]com, bank-verify (dot) in, hxxp://scam
-# Negative lookbehind on bare domain: do NOT match 'sbi.com' inside 'support@sbi.com'
+# Negative lookbehind: do NOT match bare domain parts inside email addresses or hyphenated domains
+# e.g. 'sbi.com' inside 'support@sbi.com' → excluded (preceded by @)
+# e.g. 'security.com' inside 'sbi-security.com' → excluded (preceded by -)
 OBFUSCATED_URL_PATTERN = re.compile(
     r'(?:https?|hxxps?|h\*\*p)://[^\s]+|'  # hxxp://scam
-    r'(?<!@)(?<![a-zA-Z0-9])(?:[a-z0-9][a-z0-9-]{2,})\s*(?:dot|\[?\.\]?|\(\s*dot\s*\))\s*(?:com|in|org|net|co|info)(?:/[^\s]*)?|'  # example dot com (not after @)
+    r'(?<![@\-a-zA-Z0-9])(?:[a-z0-9][a-z0-9-]{2,})\s*(?:dot|\[?\.\]?|\(\s*dot\s*\))\s*(?:com|in|org|net|co|info)(?:/[^\s]*)?|'  # example dot com (not inside email/hyphen domain)
     r'(?:[a-z0-9-]+\[\.\][a-z]+(?:/[^\s]*)?)',  # example[.]com/path
     re.IGNORECASE
 )
@@ -242,7 +244,14 @@ def extract_urls(text: str) -> list[str]:
         if normalized not in urls:
             urls.append(normalized)
     
-    return list(set(urls))  # Remove duplicates
+    # Strip trailing punctuation from ALL URLs (commas, periods, semicolons, quotes)
+    cleaned = []
+    for url in urls:
+        url = url.rstrip('.,;:"\')]\')')
+        if url:
+            cleaned.append(url)
+    
+    return list(set(cleaned))  # Remove duplicates
 
 
 
