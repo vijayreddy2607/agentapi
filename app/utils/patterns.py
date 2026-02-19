@@ -1,8 +1,10 @@
 """Regex patterns for intelligence extraction."""
 import re
 
-# UPI ID Pattern: word@word (e.g., scammer@paytm, user@ybl)
-UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
+# UPI ID Pattern: word@bankhandle where handle has NO dot or hyphen
+# e.g. scammer@paytm, user@ybl, cashback@oksbi
+# NOT: offers@fake-amazon-deals.com (hyphen/dot after handle = email)
+UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)(?![-.])', re.IGNORECASE)
 
 # Bank Account Pattern: 11-18 digits ONLY (exclude 10-digit phone numbers!)
 # Matches: 1234567890123456, 12345678901, 1234-5678-9012-3456
