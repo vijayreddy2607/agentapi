@@ -43,11 +43,11 @@ class HumanBehavior:
         (r" why ", [" y "]),
     ]
     
-    # Emotional markers
+    # Emotional markers — all English to avoid post-processing Hinglish injection
     EMOTIONAL_MARKERS = {
-        "excited": ["!", "!!", "!!!", "Woah!", "Hayy!"],
-        "confused": ["?", "??", "Huh?", "Matlab?"],
-        "worried": ["...", "Oh no!", "Arre baap re!"],
+        "excited": ["!", "!!", "!!!", "Wow!", "Really!"],
+        "confused": ["?", "??", "Huh?", "Sorry?"],
+        "worried": ["...", "Oh no!", "Oh god!"],
         "hesitant": ["Umm", "Uhh", "Hmm", "Well"],
     }
     

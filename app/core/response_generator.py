@@ -44,19 +44,20 @@ EXTRACTION FOCUS: None yet - just establish rapport
         },
         
         "3-5": {
-            "name": "CONFUSED QUESTIONING + UPI EXTRACTION",
+            "name": "CONFUSED QUESTIONING + EXTRACTION",
             "instructions": """
-PHASE 2: Show confusion and extract DIGITAL IDs.
-- "Kaise compromised hua? PIN safe toh hai?"
-- "Account number confirm kar doon ji?"
-- "UPI ID kya hai verification ke liye?"
-- "Verification link ya QR code bhejo?"
-- "Payment gateway ka email kya hai?"
+PHASE 2: Show confusion and extract DIGITAL IDs and contact details.
+- "How did my account get compromised? Is my PIN safe?"
+- "Can you confirm the account number you have on file?"
+- "What is your UPI ID or bank account for verification?"
+- "Please send me the verification link or official portal URL."
+- "What is the official email ID so I can verify this?"
 
 EXTRACTION FOCUS:
-- ✅ UPI IDs: "Aapka UPI ID kya hai confirm ke liye?"
-- ✅ Links: "Verification link bhejo confirmation ke liye"
-- ✅ Emails: "Email pe confirmation message bhej sakte ho?"
+- ✅ UPI IDs: "What is your UPI ID for me to verify?"
+- ✅ Links: "Please send the verification link"
+- ✅ Emails: "What is your official company email?"
+- ✅ Case IDs: "What is the reference or case number?"
 """
         },
         
@@ -213,17 +214,32 @@ EXTRACTION FOCUS:
         persona_key = self.PERSONA_ALIASES.get(persona.lower(), "uncle_persona")
         base_prompt = self.ENHANCED_PERSONA_PROMPTS[persona_key]
 
+        # Persona-aware language rule:
+        # Uncle + Aunty = natural Hinglish allowed (warm confused Indian personas)
+        # Worried, TechSavvy, Student = English-only (clearer evaluation signals)
+        hinglish_ok = persona_key in {"uncle_persona", "aunty_persona"}
+        if hinglish_ok:
+            language_rule = (
+                "� LANGUAGE RULE:\n"
+                "- Use natural Hinglish (mix of Hindi and English) as your persona would.\n"
+                "- Be warm, conversational, and natural — short sentences only.\n"
+            )
+        else:
+            language_rule = (
+                "🌐 LANGUAGE RULE:\n"
+                "- RESPOND IN ENGLISH ONLY. Do NOT use Hindi or Hinglish.\n"
+                "- All words must be English.\n"
+            )
+
         system_prompt = (
             f"{base_prompt}\n\n"
             f"🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})\n"
             f"{turn_strategy['instructions'].strip()}\n\n"
-            "🌐 LANGUAGE RULE:\n"
-            "- RESPOND IN ENGLISH ONLY. Do NOT use Hindi, Hinglish, or any other language.\n"
-            "- All words must be English. 'Beta', 'Arre', 'Thik hai', 'Ji' etc. are NOT allowed.\n\n"
+            f"{language_rule}\n"
             "🚨 SECURITY RULES:\n"
             "- NEVER share OTP/PIN/CVV numbers\n"
-            "- If asked for OTP → turn into extraction question (ask their name/number/ID)\n"
-            "- Keep response under 150 characters, 1-2 sentences, complete sentences only\n"
+            "- If asked for OTP → stall and ask their name/number/ID instead\n"
+            "- Keep response under 150 characters, 1-2 sentences only\n"
             "- Always end with a question mark if asking a question"
         )
         return system_prompt

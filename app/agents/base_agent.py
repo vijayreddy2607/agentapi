@@ -28,48 +28,14 @@ class BaseAgent(ABC):
         (r'\bThik hai\b', 'Alright'),
         (r'\bthik hai\b', 'alright'),
         (r'\bHaan\b', 'Yes'),
-        (r'\bhaan\b', 'yes'),
         (r'\bNahi\b', 'No'),
         (r'\bnahi\b', 'no'),
-        (r'\bJi\b', ''),
-        (r'\bji\b', ''),
-        (r'\bNa\b,', ''),
-        (r'\bna\b,', ''),
+        # Unambiguous Hinglish shortcuts (safe to replace)
         (r'\bYaar\b', 'friend'),
         (r'\byaar\b', 'friend'),
-        (r'\bBhai\b', ''),
-        (r'\bbhai\b', ''),
-        (r'\bKya\b', 'What'),
-        (r'\bkya\b', 'what'),
-        (r'\bMera\b', 'My'),
-        (r'\bmera\b', 'my'),
-        (r'\bAapka\b', 'Your'),
-        (r'\baapka\b', 'your'),
-        (r'\bAapko\b', 'You'),
-        (r'\baapko\b', 'you'),
-        (r'\bKaun\b', 'who'),
-        (r'\bkaun\b', 'who'),
-        (r'\bKahan\b', 'where'),
-        (r'\bkahan\b', 'where'),
-        # Hindi verbs that leak as dangling words
-        (r'\bdo\?', 'give?'),   # 'do' = 'give' in Hindi imperative
-        # Additional Hinglish escaping from persona prompts and aunty agent
+        (r'HAANJI[^!]*!', 'Yes!'),   # Catch HAANJI AUNTYJI! pattern
         (r'\bHayy\b', 'Wow'),
         (r'\bhayy\b', 'wow'),
-        (r'\bArey\b', 'Oh'),
-        (r'\barey\b', 'oh'),
-        (r'\bMain\b', 'I'),
-        (r'\bmain\b', 'I'),
-        (r'\btoh\b', ''),
-        (r'\bse hoon\b', 'am from'),
-        (r'\bWah\b', 'Great'),
-        (r'\bwah\b', 'great'),
-        (r'HAANJI[^!]*!', 'Yes!'),   # Catch HAANJI AUNTYJI! pattern
-        (r'\bkarunga\b', 'will do'),
-        (r'\bAbhi\b', 'Right now'),
-        (r'\babhi\b', 'right now'),
-        (r'\bSuno\b', 'Listen'),
-        (r'\bsuno\b', 'listen'),
     ]
     
     @staticmethod
