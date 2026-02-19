@@ -87,6 +87,38 @@ class ConversationDirectorAgent:
         },
     }
 
+    # Phrases that indicate the scammer is REFUSING to share info
+    REFUSAL_PATTERNS = [
+        "cannot give", "can't give", "cant give",
+        "cannot share", "can't share", "cant share",
+        "not allowed", "not permitted", "not supposed to",
+        "should not give", "should not share",
+        "won't give", "wont give", "won't share", "wont share",
+        "don't ask", "dont ask",
+        "why do you need", "why are you asking",
+        "just do it", "just proceed", "just follow",
+        "focus on", "stop asking", "irrelevant",
+        "my number is not required", "number is not needed",
+        "not necessary", "no need for that",
+        "security reasons", "policy", "confidential",
+    ]
+
+    # Pivot sequence when scammer refuses — try alternatives
+    REFUSAL_PIVOT_SEQUENCE = [
+        # If they won't give phone → ask for email
+        {"refused": "phone", "pivot_to": "email",
+         "pivot_hint": "Scammer refused phone. Ask for their email address or official ID instead."},
+        # If they won't give email → ask for UPI/website
+        {"refused": "email", "pivot_to": "upi_or_link",
+         "pivot_hint": "Scammer refused email. Ask for their UPI ID or company website link."},
+        # If they won't give UPI → ask for company name/employee ID
+        {"refused": "upi_or_link", "pivot_to": "company_id",
+         "pivot_hint": "Scammer refused link. Ask for their company name, branch, or employee ID."},
+        # If they won't give anything → use suspicion stall
+        {"refused": "company_id", "pivot_to": "stall_suspicion",
+         "pivot_hint": "Scammer refuses all info. Raise gentle suspicion: 'If you can't give any details, how can I trust this?'"},
+    ]
+
     def __init__(self):
         self._persona_engagement_scores: Dict[str, float] = {}
 
@@ -133,7 +165,8 @@ class ConversationDirectorAgent:
         turn_number: int,
         extracted_so_far: Dict[str, List],
         scammer_requesting: List[str],
-        scam_type: str
+        scam_type: str,
+        conversation_history: Optional[List[Dict]] = None
     ) -> Dict[str, Any]:
         """
         Select the extraction strategy for this turn.
@@ -193,6 +226,17 @@ class ConversationDirectorAgent:
             strategy["redirect_otp"] = True
             strategy["redirect_message"] = "Turn OTP request into extraction opportunity"
 
+        # Special case: if scammer is REFUSING to share info, pivot extraction target
+        if conversation_history:
+            last_scammer_msg = ""
+            for msg in reversed(conversation_history):
+                if msg.get("sender") == "scammer":
+                    last_scammer_msg = msg.get("text", "").lower()
+                    break
+            if self._detect_refusal(last_scammer_msg):
+                strategy["scammer_refused"] = True
+                strategy["refusal_msg"] = last_scammer_msg
+
         logger.info(f"[Director] Turn {turn_number}: Strategy='{strategy['name']}', "
                    f"Priority='{strategy.get('priority', 'N/A')}', "
                    f"Targets={strategy.get('extraction_targets', [])}")
@@ -247,6 +291,37 @@ class ConversationDirectorAgent:
 
         return max(0.0, min(1.0, score))
 
+    def _detect_refusal(self, text: str) -> bool:
+        """Detect if the scammer is refusing to share information."""
+        text_lower = text.lower()
+        return any(pattern in text_lower for pattern in self.REFUSAL_PATTERNS)
+
+    def _get_refusal_pivot_hint(self, conversation_history: list) -> str:
+        """
+        When scammer refuses to share info, return a pivot hint for the persona.
+        Looks at recent conversation to determine what was refused and what to pivot to.
+        """
+        # Find what the agent most recently asked for (from last agent message)
+        last_asked = "phone"  # default pivot start
+        for msg in reversed(conversation_history or []):
+            if msg.get("sender") == "agent":
+                text = msg.get("text", "").lower()
+                if any(w in text for w in ["phone", "number", "contact", "whatsapp", "call"]):
+                    last_asked = "phone"
+                elif any(w in text for w in ["email", "mail"]):
+                    last_asked = "email"
+                elif any(w in text for w in ["upi", "link", "website", "url"]):
+                    last_asked = "upi_or_link"
+                elif any(w in text for w in ["employee", "id", "company", "branch"]):
+                    last_asked = "company_id"
+                break
+
+        # Find the pivot hint
+        for pivot in self.REFUSAL_PIVOT_SEQUENCE:
+            if pivot["refused"] == last_asked:
+                return pivot["pivot_hint"]
+        return "Scammer refusing. Pivot to a different extraction target (email, UPI ID, or company name)."
+
     def decide(
         self,
         scam_type: str,
@@ -289,11 +364,12 @@ class ConversationDirectorAgent:
             turn_number=turn_number,
             extracted_so_far=accumulated_intelligence or {},
             scammer_requesting=intelligence_log.get("scammer_requesting", []),
-            scam_type=scam_type
+            scam_type=scam_type,
+            conversation_history=conversation_history
         )
 
         # Build additional context for persona agent
-        additional_context = self._build_context_hint(strategy, intelligence_log, turn_number)
+        additional_context = self._build_context_hint(strategy, intelligence_log, turn_number, conversation_history)
 
         decision = {
             "persona": persona,
@@ -314,7 +390,8 @@ class ConversationDirectorAgent:
         self,
         strategy: Dict,
         intelligence_log: Dict,
-        turn_number: int
+        turn_number: int,
+        conversation_history: Optional[List[Dict]] = None
     ) -> str:
         """Build additional context hint for the persona agent."""
         hints = []
@@ -330,6 +407,21 @@ class ConversationDirectorAgent:
         # OTP redirect
         if strategy.get("redirect_otp"):
             hints.append("⚠️ SCAMMER ASKING FOR OTP/PIN — DO NOT PROVIDE. Instead ask for their contact details.")
+
+        # ── REFUSAL HANDLING ─────────────────────────────────────────────────────
+        if strategy.get("scammer_refused"):
+            pivot_hint = self._get_refusal_pivot_hint(conversation_history or [])
+            hints.append(
+                f"\n🔄 SCAMMER REFUSED TO SHARE INFO. DO NOT repeat the same question.\n"
+                f"PIVOT TACTIC: {pivot_hint}\n"
+                "EXAMPLE RESPONSES BY PERSONA:\n"
+                "  Uncle:   'Achha beta, thik hai. Then at least tell me your office address? Or email?'\n"
+                "  Worried: 'Oh okay...then how do I verify this is real? Your email?'\n"
+                "  Aunty:   'Acha beta, no problem. Then bata do company ka naam?'\n"
+                "  Student: 'Ok bro, np. Send ur company website link then?'\n"
+                "  TechSavvy: 'Okay. Then send me official email from @company domain.'\n"
+                "Keep the conversation going. Do not sound upset. Pivot naturally."
+            )
 
         # Tactics detected
         tactics = intelligence_log.get("tactics_detected", [])
