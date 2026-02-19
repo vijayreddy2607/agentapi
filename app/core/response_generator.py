@@ -13,6 +13,7 @@ import json
 import re
 from app.agents.templates import get_persona_templates, get_all_templates_as_examples
 from app.utils.groq_client import GroqClient
+from app.prompts.uncle_persona import UNCLE_SYSTEM_PROMPT, UNCLE_FEW_SHOT_EXAMPLES
 from app.prompts.worried_persona import WORRIED_SYSTEM_PROMPT, WORRIED_FEW_SHOT_EXAMPLES
 from app.prompts.techsavvy_persona import TECHSAVVY_SYSTEM_PROMPT, TECHSAVVY_FEW_SHOT_EXAMPLES
 from app.prompts.student_persona import STUDENT_SYSTEM_PROMPT, STUDENT_FEW_SHOT_EXAMPLES
@@ -172,6 +173,7 @@ EXTRACTION FOCUS:
     
     # Enhanced persona system prompts (imported from persona files)
     ENHANCED_PERSONA_PROMPTS = {
+        "uncle_persona": UNCLE_SYSTEM_PROMPT,
         "worried_persona": WORRIED_SYSTEM_PROMPT,
         "techsavvy_persona": TECHSAVVY_SYSTEM_PROMPT,
         "student_persona": STUDENT_SYSTEM_PROMPT,
@@ -179,84 +181,49 @@ EXTRACTION FOCUS:
     }
 
     ENHANCED_PERSONA_EXAMPLES = {
+        "uncle_persona": UNCLE_FEW_SHOT_EXAMPLES,
         "worried_persona": WORRIED_FEW_SHOT_EXAMPLES,
         "techsavvy_persona": TECHSAVVY_FEW_SHOT_EXAMPLES,
         "student_persona": STUDENT_FEW_SHOT_EXAMPLES,
         "aunty_persona": AUNTY_FEW_SHOT_EXAMPLES,
     }
 
+    # Maps alternate persona name variants to canonical keys
+    PERSONA_ALIASES = {
+        "uncle": "uncle_persona",
+        "worried": "worried_persona",
+        "techsavvy": "techsavvy_persona",
+        "techsavvy_student": "techsavvy_persona",
+        "techsavvy_persona": "techsavvy_persona",
+        "student": "student_persona",
+        "aunty": "aunty_persona",
+        "sunita": "aunty_persona",
+        "uncle_persona": "uncle_persona",
+        "worried_persona": "worried_persona",
+        "student_persona": "student_persona",
+        "aunty_persona": "aunty_persona",
+    }
+
     def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
-        """Build system prompt — uses enhanced persona prompts for all non-uncle personas."""
+        """Build system prompt — uses full enhanced persona prompt for all 5 personas."""
         turn_strategy = self.get_turn_strategy(turn_number)
 
-        # Use enhanced prompt if available for this persona
-        if persona in self.ENHANCED_PERSONA_PROMPTS:
-            base_prompt = self.ENHANCED_PERSONA_PROMPTS[persona]
-            system_prompt = f"""{base_prompt}
+        # Normalize persona name to canonical key
+        persona_key = self.PERSONA_ALIASES.get(persona.lower(), "uncle_persona")
+        base_prompt = self.ENHANCED_PERSONA_PROMPTS[persona_key]
 
-🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})
-{turn_strategy['instructions']}
-
-🚨 CRITICAL SECURITY RULES:
-- NEVER share OTP numbers (even fake ones)
-- NEVER share PIN/CVV/password
-- If asked for OTP → turn it into extraction: "OTP kyun? Pehle apna ID batao"
-- NEVER type actual digits when OTP/PIN is asked"""
-            return system_prompt
-
-        # Uncle persona and fallback: use compact inline prompt
-        use_english = 'student' in persona.lower() or 'techsavvy' in persona.lower()
-
-        if use_english:
-            system_prompt = f"""You're texting as a smart cautious Indian (30s) talking to a scammer.
-
-PHASE: {turn_strategy['name']} (Turn {turn_number})
-{turn_strategy['instructions']}
-
-🚨 RULES: Never share OTP/PIN. Turn OTP requests into extraction (ask their number/ID).
-Style: Casual English, 1 sentence, under 80 chars.
-
-EXAMPLES:
-✅ "What's your ID number?"
-✅ "Tell me your number"
-✅ "Where's your office?"
-"""
-        else:
-            # Hindi/Hinglish instructions for uncle, aunty, worried
-            system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
-
-PHASE: {turn_strategy['name']} (Turn {turn_number})
-{turn_strategy['instructions']}
-
-🚨 CRITICAL SECURITY RULES - NEVER BREAK THESE:
-- NEVER share OTP numbers (even fake ones)
-- NEVER share PIN/CVV/password
-- If asked for OTP → say "I got OTP, but aapka WhatsApp number kya hai?" or "OTP kyun chahiye? Pehle verify karo"
-- NEVER type actual digits when OTP/PIN is asked
-- Turn OTP requests into EXTRACTION opportunities (ask for their number/email/ID)
-
-HOW TO TEXT:
-- Just type naturally like WhatsApp/SMS
-- 1 short sentence (40-80 characters max)
-- Mix Hindi/English casually
-- Use: beta, ji, yaar, arre (pick one if it fits)
-- NO quotes, NO formatting, NO extra punctuation
-
-EXAMPLES OF NATURAL TEXTING:
-✅ "Naam kya hai beta"
-✅ "Arre number batao"
-✅ "Kyu blockedho raha"
-✅ "Office kahan hai"
-
-WRONG - DON'T DO THIS:
-❌ "Arre beta kya..." (no quotes!)
-❌ "Main verify karna chahta hoon" (too formal, just say "verify karunga")
-❌ Adding Matlab? Huh? ?? at end (don't do this!)
-❌ Long sentences with multiple clauses
-
-Just text ONE short natural question or response (under 80 chars)."""
-        
+        system_prompt = (
+            f"{base_prompt}\n\n"
+            f"🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})\n"
+            f"{turn_strategy['instructions'].strip()}\n\n"
+            "🚨 SECURITY RULES:\n"
+            "- NEVER share OTP/PIN/CVV numbers\n"
+            "- If asked for OTP → turn into extraction question (ask their name/number/ID)\n"
+            "- Keep response under 120 characters, 1-2 sentences only"
+        )
         return system_prompt
+
+
     
     async def generate_response(
         self,

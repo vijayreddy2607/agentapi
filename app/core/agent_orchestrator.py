@@ -163,12 +163,7 @@ class AgentOrchestrator:
             scam_type=session.scam_type
         )
 
-        # ── STEP 6: Strip emojis ──────────────────────────────────────────────────
-        common_emojis = ['🙏', '😭', '😊', '😟', '😢', '😔', '😳', '🤔', '😅', '😰', '😨', '😱']
-        for emoji in common_emojis:
-            response = response.replace(emoji, '')
         response = response.strip()
-
         logger.info(f"✅ Multi-agent response (turn {turn_number}): {response[:80]}...")
 
         return response, intel_log
