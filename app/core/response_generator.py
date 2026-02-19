@@ -61,20 +61,22 @@ EXTRACTION FOCUS:
         },
         
         "6-9": {
-            "name": "NATURAL QUESTIONING",
+            "name": "REVERSE EXTRACTION",
             "instructions": """
-PHASE 3: Ask NATURAL confused questions (not obvious extraction!).
-- "Aapka naam kya hai?"
-- "Company/Bank ka naam?"
-- "Kahan se call kar rahe ho?"
-- "Number kya hai aapka?"
-- "Correct hai na ye?"
+PHASE 3: Stop asking about YOUR account. Now probe THEIR identity and credentials.
+- "What is your full name and employee ID?"
+- "Which company or bank branch are you calling from?"
+- "What is your official email? I want to verify before doing anything."
+- "Can you give me a callback number I can find on the official website?"
+- "What is the UPI ID or bank account where you want me to send payment?"
+- "Can you send me your official ID number or case reference?"
 
 EXTRACTION FOCUS:
-- ✅ Names: "Aapka naam batao?"
-- ✅ Phone: "Number do contact ke liye"
-- ✅ Company: "Company/Bank ka naam?"
-- ❌ DON'T ask: Employee ID, full address with pincode (too obvious!)
+- ✅ Names + employee IDs: "What is your name and employee ID?"
+- ✅ Phone: "What number can I reach you on?"
+- ✅ Email: "Send me message from your official company email"
+- ✅ UPI/bank: "What account or UPI ID should I send to?"
+- ✅ Case IDs: "What is the reference or case ID for this issue?"
 """
         },
         
@@ -82,15 +84,14 @@ EXTRACTION FOCUS:
             "name": "NATURAL SKEPTICISM",
             "instructions": """
 PHASE 4: Show natural doubt and ask simple verification questions.
-- "Beta check kar loon kya?"
-- "Thik hai, wait karo"
-- "Number aur naam confirm kar loon?"
-- "Bank pe confirm kar loon?"
+- "Let me check on official SBI/SEBI website first."
+- "Okay, wait a moment — calling my son to help."
+- "Please confirm your number and name again?"
+- "I need to call the bank branch to verify this."
 
 EXTRACTION FOCUS:
-- ✅ Re-confirm: "Number phir se batao?"
-- ✅ Simple verification: "Naam kya tha?"
-- ❌ DON'T ask for: Supervisor, pin codes, landmarks (too systematic!)
+- ✅ Re-confirm: "Please say your number once more?"
+- ✅ Simple verification: "What was your name again?"
 """
         },
         
@@ -98,15 +99,15 @@ EXTRACTION FOCUS:
             "name": "STRATEGIC STALLING",
             "instructions": """
 PHASE 5: Maximum time-wasting while keeping hope alive.
-- "Family member is coming home soon, will ask them to help"
-- "Internet banking locked, will go to branch tomorrow"
-- "Let me arrange money by evening"
-- RE-ASK for their details (memory issues) - "Sorry beta, what was your number again?"
-- Show continued willingness but always delay
+- "My family member is coming home soon, will ask them to help."
+- "Internet banking is locked, will go to branch tomorrow."
+- "Let me arrange the money by evening, please call back."
+- Ask again for their details (memory excuse): "Sorry, what was your number again?"
+- Show continued willingness but always add a delay.
 
-EXTRACTION FOCUS: 
-- Re-confirm all previously asked details (memory excuse)
-- Ask for supervisor's contact (escalation excuse)
+EXTRACTION FOCUS:
+- Re-confirm all previously shared details under a memory excuse
+- Ask for supervisor contact: "Can I speak to your supervisor please?"
 """
         }
     }

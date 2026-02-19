@@ -24,8 +24,8 @@ router = APIRouter()
 scam_detector = ScamDetector()
 
 
-@router.post("/")  # Root endpoint - base URL and endpoint URL are same
-@router.post("/api/message", response_model=GUVISimpleResponse)  # Also keep old endpoint for compatibility
+@router.post("/", response_model=GUVISimpleResponse)  # Root endpoint
+@router.post("/api/message", response_model=GUVISimpleResponse)  # Compatibility alias
 async def process_message(
     request: MessageRequest,
     background_tasks: BackgroundTasks,
@@ -304,11 +304,11 @@ async def process_message(
             session
         )
         
-        # Build GUVI-compliant simple response (with optional intelligence_log)
+        # Build GUVI-compliant simple response
         return GUVISimpleResponse(
             status="success",
             reply=response_msg.text,
-            intelligence_log=intel_log  # Attach for evaluation; excluded if None
+            intelligence_log=intel_log or {}  # Always return dict, never None
         )
     
     except Exception as e:
