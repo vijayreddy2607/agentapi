@@ -249,8 +249,11 @@ async def process_message(
             if bank_predictions:
                 agent_notes += f" | Potential Banks: {', '.join(bank_predictions)}"
             
-            # Send callback (don't block on failure)
-            callback_success = await send_guvi_callback(
+            # Send callback NON-BLOCKING via background task:
+            # API returns the reply immediately; GUVI's system waits up to 10s separately for finalOutput.
+            # This keeps API response time well under 5s regardless of GUVI server latency.
+            background_tasks.add_task(
+                send_guvi_callback,
                 session_id=request.sessionId,
                 scam_detected=session.scam_detected,
                 total_messages=session.total_messages,
@@ -260,9 +263,10 @@ async def process_message(
                 scam_type=getattr(session, "scam_type", "unknown") or "unknown",
                 confidence_level=getattr(session, "confidence_level", 0.95) or 0.95,
             )
+            logger.info(f"\ud83d\udce4 GUVI callback queued as background task for session {request.sessionId}")
             
-            # Only mark complete if conversation is actually over
-            if callback_success and should_complete:
+            # Mark complete immediately if conversation is over (don't wait for callback)
+            if should_complete:
                 session_manager.mark_complete(request.sessionId)
                 
             # If intermediate update, we continue conversation!
