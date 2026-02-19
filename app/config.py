@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     
     # Session Configuration
     session_timeout_seconds: int = 300
-    max_conversation_turns: int = 30
+    max_conversation_turns: int = 20  # 10 agent + 10 scammer messages = 10 real turns
     min_intelligence_items: int = 1  # Lowered from 2 to trigger callback faster
     
     # Application Settings
