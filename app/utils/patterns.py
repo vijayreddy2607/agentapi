@@ -1,10 +1,9 @@
 """Regex patterns for intelligence extraction."""
 import re
 
-# UPI ID Pattern: word@bankhandle where handle has NO dot or hyphen
-# e.g. scammer@paytm, user@ybl, cashback@oksbi
-# NOT: offers@fake-amazon-deals.com (hyphen/dot after handle = email)
-UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)(?![-.])', re.IGNORECASE)
+# UPI ID Pattern: word@bankhandle (e.g. scammer@paytm, user@ybl, cashback@oksbi)
+# Note: disambiguation from emails is done in extract_upi_ids() using position checks
+UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 
 # Bank Account Pattern: 11-18 digits ONLY (exclude 10-digit phone numbers!)
 # Matches: 1234567890123456, 12345678901, 1234-5678-9012-3456
@@ -130,17 +129,24 @@ PAYMENT_APPS = [
 
 def extract_upi_ids(text: str) -> list[str]:
     """Extract UPI IDs from text.
-    UPI IDs: word@bankhandle (no dots in domain part, e.g. @ybl @oksbi @fakebank)
-    Emails: word@domain.tld (has dots, e.g. @gmail.com @fake-amazon-deals.com)
+    UPI IDs: word@bankhandle — handle has no dots (e.g. @ybl @oksbi @fakebank)
+    Emails: word@domain.tld — domain contains dots/hyphens (e.g. @fake-amazon-deals.com)
+    Key insight: if the match is followed by '-' in original text, it's part of an email domain.
+    If followed by '.' it may be sentence punctuation (e.g. 'cashback@fakeupi.').
     """
-    matches = UPI_PATTERN.findall(text.lower())
+    text_lower = text.lower()
     upi_ids = []
-    for m in matches:
-        # UPI IDs have NO dot in the part after @
-        # Emails have a dot in the domain (e.g. .com, .in)
+    for match in UPI_PATTERN.finditer(text_lower):
+        m = match.group(1)
+        end_pos = match.end()
+        # Skip if immediately followed by '-' (email domain like @fake-amazon-deals.com)
+        # Do NOT skip if followed by '.' (could be sentence end, not email extension)
+        if end_pos < len(text_lower) and text_lower[end_pos] == '-':
+            continue
+        # Also skip if the domain part contains a dot (e.g. matched @fake.com)
         at_pos = m.rfind('@')
         domain_part = m[at_pos+1:] if at_pos >= 0 else ''
-        if '.' not in domain_part:  # No dot = UPI ID, not email
+        if '.' not in domain_part:
             upi_ids.append(m)
     return list(set(upi_ids))
 
