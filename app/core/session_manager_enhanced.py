@@ -5,6 +5,7 @@ from app.models import Intelligence, Message
 from app.agents import BaseAgent
 from app.db import SessionModel, MessageModel, IntelligenceModel, RLTrainingDataModel, SessionLocal
 from app.rl import RLAgent, RewardCalculator, StateEncoder
+from app.core.session_manager import ScammerConversationState
 import logging
 import json
 
@@ -31,6 +32,9 @@ class Session:
         # RL integration
         self.previous_intelligence_count = 0
         self.current_rl_action = None
+
+        # ── In-session scammer state tracker (no DB, resets per conversation) ──
+        self.scammer_state = ScammerConversationState()
     
     def add_message(self, message: Message):
         """Add a message to conversation history."""
