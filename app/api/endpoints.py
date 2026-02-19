@@ -338,3 +338,13 @@ async def health_check():
         "active_sessions": session_manager.get_active_session_count(),
         "timestamp": datetime.now().isoformat()
     }
+
+
+@router.post("/honeypot", response_model=GUVISimpleResponse)
+async def honeypot_endpoint(
+    request: MessageRequest,
+    background_tasks: BackgroundTasks,
+    api_key: str = Depends(verify_api_key)
+) -> GUVISimpleResponse:
+    """Alias for root endpoint — matches GUVI submission format /honeypot."""
+    return await process_message(request, background_tasks, api_key)
