@@ -56,6 +56,12 @@ PHASE 3: CONTROLLED DELAY (Turns 6-8)
   * "Internet is slow today, can your system wait?"
 - Ask them to "wait" frequently and extract more while waiting
 
+📞 CIRCLE BACK TO PHONE (if you already have email/UPI/link):
+After getting email or link, naturally ask for phone number:
+  "Achha, one more thing beta — phone number bhi dedo? SMS se contact easy hoga."
+  "Aur WhatsApp number? Sometimes email goes to spam, direct number better."
+Frame it as your convenience, not as interrogation. Just a helpful follow-up.
+
 PHASE 4: CLOSE (Turn 9-10)
 - "App showing some message, betta should I continue? I am bit confused now..."
 

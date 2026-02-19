@@ -186,6 +186,7 @@ class ConversationDirectorAgent:
         has_account = bool(extracted_so_far.get("bank_accounts"))
         has_url = bool(extracted_so_far.get("urls"))
         has_email = bool(extracted_so_far.get("emails"))
+        has_digital = has_upi or has_url or has_email  # got something digital already
 
         # Phase 1: Build trust (turns 1-2)
         if turn_number <= 2:
@@ -200,12 +201,22 @@ class ConversationDirectorAgent:
                 strategy = self.PHASE_STRATEGIES["extract_contact"].copy()
             strategy["priority"] = "get_upi_or_link"
 
+            # ── CIRCLE BACK to phone after getting email/UPI ──────────────────
+            # If we have some digital info but no phone yet, ask for phone
+            # with a natural friendly reason ("easier to reach you")
+            if has_digital and not has_phone:
+                strategy["circle_back_phone"] = True
+
         # Phase 3: Extract contact info (turns 6-8)
         elif turn_number <= 8:
             strategy = self.PHASE_STRATEGIES["extract_contact"].copy()
             if has_phone:
                 # Already have phone, try financial
                 strategy = self.PHASE_STRATEGIES["extract_financial"].copy()
+            else:
+                # Still no phone — mark as circle back opportunity
+                if has_digital:
+                    strategy["circle_back_phone"] = True
             strategy["priority"] = "get_phone_number"
 
         # Phase 4: Extract financial (turns 9-11)
@@ -421,6 +432,20 @@ class ConversationDirectorAgent:
                 "  Student: 'Ok bro, np. Send ur company website link then?'\n"
                 "  TechSavvy: 'Okay. Then send me official email from @company domain.'\n"
                 "Keep the conversation going. Do not sound upset. Pivot naturally."
+            )
+
+        # ── CIRCLE BACK TO PHONE ──────────────────────────────────────────────────
+        if strategy.get("circle_back_phone"):
+            hints.append(
+                "\n📞 CIRCLE BACK TO PHONE: You have their email/UPI/link. Now ASK FOR PHONE naturally.\n"
+                "Frame it as needing easier/faster contact — NOT as interrogation.\n"
+                "EXAMPLE RESPONSES BY PERSONA:\n"
+                "  Uncle:   'Achha, one more thing beta — phone number bhi dedo? SMS se contact easy hoga.'\n"
+                "  Worried: 'Okay...and what is your direct number? Email takes time, phone is faster.'\n"
+                "  Aunty:   'Beta link mila, thank you! Ek WhatsApp number bhi dena? More clear hoga.'\n"
+                "  Student: 'Got the link! Also send ur number? Easier to clarify stuff quickly 😊'\n"
+                "  TechSavvy: 'Received. For faster verification, your direct number?'\n"
+                "Ask casually — you already have something from them, this is just a natural follow-up."
             )
 
         # Tactics detected

@@ -52,6 +52,12 @@ PHASE 3: CONTROLLED DELAY (Turns 6-8)
   * "Internet dropping, hold on"
 - Extract more while panicking
 
+📞 CIRCLE BACK TO PHONE (if you already have email/UPI/link):
+After getting their email or link, ask for phone number in an urgent, worried tone:
+  "Okay...and what is your DIRECT number? Email takes too long, I need faster contact!"
+  "Please WhatsApp number bhi dena — this is urgent, I can't wait for email!"
+A scared/worried person NATURALLY wants a direct phone line. Totally believable.
+
 PHASE 4: CLOSE (Turn 9-10)
 - Escalate worries to end: "I think I need police help"
 

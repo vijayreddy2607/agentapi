@@ -48,6 +48,12 @@ PHASE 3: CONTROLLED HYPE (Turns 6-8)
   * "Friends se poochun?"
   * "Net slow, hold"
 
+📞 CIRCLE BACK TO PHONE (if you already have email/UPI/link):
+After getting their link or email, casually ask for phone number:
+  "Got ur link! Also bro send ur number? Easier to ask quick questions 😊"
+  "Aight, got the website. WhatsApp number bhi do? Quick clarify karna tha."
+Students naturally want direct fast contact — totally believable.
+
 PHASE 4: CLOSE (Turn 9-10)
 - "Excited but need confirm" to end
 

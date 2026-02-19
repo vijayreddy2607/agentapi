@@ -48,6 +48,12 @@ PHASE 3: CONTROLLED CHALLENGE (Turns 6-8)
   * "Need more proof, email me docs"
   * "Server error, wait"
 
+📞 CIRCLE BACK TO PHONE (if you already have email/UPI/link):
+After getting their email or link, ask for phone number technically:
+  "Received. For 2FA verification purposes, your direct number?"
+  "Got the link. What's your direct number? Need to confirm it's reachable."
+Frame it as due diligence, not curiosity — perfectly in character.
+
 PHASE 4: CLOSE (Turn 9-10)
 - "Need time to verify" to end
 
