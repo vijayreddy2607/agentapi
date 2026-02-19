@@ -13,6 +13,10 @@ import json
 import re
 from app.agents.templates import get_persona_templates, get_all_templates_as_examples
 from app.utils.groq_client import GroqClient
+from app.prompts.worried_persona import WORRIED_SYSTEM_PROMPT, WORRIED_FEW_SHOT_EXAMPLES
+from app.prompts.techsavvy_persona import TECHSAVVY_SYSTEM_PROMPT, TECHSAVVY_FEW_SHOT_EXAMPLES
+from app.prompts.student_persona import STUDENT_SYSTEM_PROMPT, STUDENT_FEW_SHOT_EXAMPLES
+from app.prompts.aunty_persona import AUNTY_SYSTEM_PROMPT, AUNTY_FEW_SHOT_EXAMPLES
 
 logger = logging.getLogger(__name__)
 
@@ -114,17 +118,33 @@ EXTRACTION FOCUS:
     ]
     
     PERSONA_MAPPING = {
+        # Uncle: bank/KYC/UPI scams (confused elderly)
         "bank_fraud": "uncle_persona",
-        "upi_fraud": "uncle_persona", 
+        "upi_fraud": "uncle_persona",
         "kyc_scam": "uncle_persona",
-        "job_scam": "techsavvy_student",
-        "lottery_prize": "student_persona",
+        "govt_scheme": "uncle_persona",
+        # Student: job/loan scams (excited youth)
+        "job_scam": "student_persona",
+        "loan_scam": "student_persona",
+        # TechSavvy: investment/crypto/tech scams (skeptical professional)
+        "investment_scam": "techsavvy_persona",
+        "crypto": "techsavvy_persona",
+        "tech_support": "techsavvy_persona",
+        # Worried: billing/legal/credit/delivery (panicked adult)
         "phishing": "worried_persona",
-        "tech_support": "worried_persona",
         "government_scam": "worried_persona",
-        "investment_scam": "aunty_persona",
+        "credit_card": "worried_persona",
+        "police_legal": "worried_persona",
+        "tax_refund": "worried_persona",
+        "bill_payment": "worried_persona",
+        "electricity": "worried_persona",
+        "delivery": "worried_persona",
+        # Aunty: lottery/romance (warm social)
+        "lottery_prize": "aunty_persona",
         "romance_scam": "aunty_persona",
-        "other_scam": "normal_persona"
+        "prize_lottery": "aunty_persona",
+        # Default
+        "other_scam": "uncle_persona"
     }
     
     def __init__(self, groq_api_key: str):
@@ -150,57 +170,57 @@ EXTRACTION FOCUS:
         else:
             return self.TURN_STRATEGIES["13+"]
     
+    # Enhanced persona system prompts (imported from persona files)
+    ENHANCED_PERSONA_PROMPTS = {
+        "worried_persona": WORRIED_SYSTEM_PROMPT,
+        "techsavvy_persona": TECHSAVVY_SYSTEM_PROMPT,
+        "student_persona": STUDENT_SYSTEM_PROMPT,
+        "aunty_persona": AUNTY_SYSTEM_PROMPT,
+    }
+
+    ENHANCED_PERSONA_EXAMPLES = {
+        "worried_persona": WORRIED_FEW_SHOT_EXAMPLES,
+        "techsavvy_persona": TECHSAVVY_FEW_SHOT_EXAMPLES,
+        "student_persona": STUDENT_FEW_SHOT_EXAMPLES,
+        "aunty_persona": AUNTY_FEW_SHOT_EXAMPLES,
+    }
+
     def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
-        """Build minimal prompt for natural human-like responses."""
+        """Build system prompt — uses enhanced persona prompts for all non-uncle personas."""
         turn_strategy = self.get_turn_strategy(turn_number)
-        
-        # Minimal persona description
-        persona_map = {
-            "uncle_persona": "confused elderly person, respectful (calls beta/ji), worried about pension",
-            "aunty_persona": "housewife, worried about family, mentions household things",
- "student_persona": "college student, uses bro/dude, casual Gen-Z style",
-            "worried_persona": "very scared, panicky, seeks help",
-            "techsavvy_student": "smart student, asks for proof, cautious",
-        }
-        persona_desc = persona_map.get(persona, "normal middle-class person")
-        
-        # Determine if English-only persona
+
+        # Use enhanced prompt if available for this persona
+        if persona in self.ENHANCED_PERSONA_PROMPTS:
+            base_prompt = self.ENHANCED_PERSONA_PROMPTS[persona]
+            system_prompt = f"""{base_prompt}
+
+🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})
+{turn_strategy['instructions']}
+
+🚨 CRITICAL SECURITY RULES:
+- NEVER share OTP numbers (even fake ones)
+- NEVER share PIN/CVV/password
+- If asked for OTP → turn it into extraction: "OTP kyun? Pehle apna ID batao"
+- NEVER type actual digits when OTP/PIN is asked"""
+            return system_prompt
+
+        # Uncle persona and fallback: use compact inline prompt
         use_english = 'student' in persona.lower() or 'techsavvy' in persona.lower()
-        
-        
+
         if use_english:
-            # English instructions for student and techsavvy
-            system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
+            system_prompt = f"""You're texting as a smart cautious Indian (30s) talking to a scammer.
 
 PHASE: {turn_strategy['name']} (Turn {turn_number})
 {turn_strategy['instructions']}
 
-🚨 CRITICAL SECURITY RULES - NEVER BREAK THESE:
-- NEVER share OTP numbers (even fake ones)
-- NEVER share PIN/CVV/password
-- If asked for OTP → say "I got OTP, but what's your WhatsApp number?" or "Why do you need OTP? Verify yourself first"
-- NEVER type actual digits when OTP/PIN is asked
-- Turn OTP requests into EXTRACTION opportunities (ask for their number/email/ID)
+🚨 RULES: Never share OTP/PIN. Turn OTP requests into extraction (ask their number/ID).
+Style: Casual English, 1 sentence, under 80 chars.
 
-HOW TO TEXT:
-- Just type naturally like WhatsApp/SMS
-- 1 short sentence (40-80 characters max)
-- Use casual English with slang: bro, dude, yeah, okay
-- NO quotes, NO formatting, NO extra punctuation
-
-EXAMPLES OF NATURAL TEXTING:
+EXAMPLES:
 ✅ "What's your ID number?"
 ✅ "Tell me your number"
-✅ "Why is it blocked?"
 ✅ "Where's your office?"
-
-WRONG - DON'T DO THIS:
-❌ "Arre beta kya..." (no Hindi!)
-❌ "I want to verify this" (too formal, just say "need to verify")
-❌ Adding Huh? ?? at end (don't do this!)
-❌ Long sentences with multiple clauses
-
-Just text ONE short natural question or response (under 80 chars)."""
+"""
         else:
             # Hindi/Hinglish instructions for uncle, aunty, worried
             system_prompt = f"""You're texting as a {persona_desc} talking to a potential scammer.
