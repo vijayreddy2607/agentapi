@@ -257,7 +257,7 @@ EXTRACTION FOCUS:
         if conversation_history and len(conversation_history) > 0:
             context = "\n".join([
                 f"{'Scammer' if msg.get('sender') == 'scammer' else 'You'}: {msg.get('text', '')}"
-                for msg in conversation_history[-4:]  # Last 4 messages for context
+                for msg in conversation_history[-8:]  # Last 4 messages for context
             ])
             user_message = f"Recent conversation:\n{context}\n\nScammer's latest message: {scammer_message}\n\nGenerate your response:"
         
@@ -452,7 +452,7 @@ EXTRACTION FOCUS:
         if conversation_history and len(conversation_history) > 0:
             context = "\n".join([
                 f"{'Scammer' if msg.get('sender') == 'scammer' else 'You'}: {msg.get('text', '')}"
-                for msg in conversation_history[-4:]  # Last 4 messages for context
+                for msg in conversation_history[-8:]  # Last 4 messages for context
             ])
             user_message = f"Recent conversation:\n{context}\n\nScammer's latest message: {scammer_message}\n\nGenerate your response:"
         
