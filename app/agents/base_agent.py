@@ -82,7 +82,38 @@ class BaseAgent(ABC):
         # Clean up double spaces created by empty replacements
         result = re.sub(r'  +', ' ', result).strip()
         return result
-    
+
+    # Full Hindi/Hinglish words that indicate a sentence-level Hinglish response
+    _HINDI_WORD_SET = {
+        'ka', 'ke', 'ki', 'ko', 'se', 'hai', 'hain', 'ho', 'tha', 'thi', 'the',
+        'aur', 'ya', 'par', 'mein', 'pe', 'tak', 'bhi', 'sirf', 'toh',
+        'kya', 'kaise', 'kyun', 'kab', 'kahan', 'kaun', 'kitna',
+        'nahi', 'nahi', 'mat', 'na', 'haan', 'ji', 'ek', 'do', 'teen',
+        'mera', 'meri', 'mere', 'apna', 'apni', 'apne', 'tumhara', 'aapka',
+        'batao', 'bata', 'dijiye', 'karo', 'karna', 'dena', 'lena', 'lelo',
+        'hum', 'tum', 'aap', 'woh', 'yeh', 'wahan', 'yahan', 'ab',
+        'abhi', 'phir', 'pehle', 'baad', 'lekin', 'agar', 'to', 'warna',
+        'sahi', 'galat', 'achha', 'bura', 'zyada', 'kam', 'bahut',
+        'naam', 'number', 'samjhe', 'samajh', 'suniye', 'suno', 'dekho',
+        'kripya', 'turant', 'jaldi', 'rukiye', 'ruko', 'aaiye', 'aao',
+    }
+
+    @classmethod
+    def is_english_response(cls, text: str) -> bool:
+        """
+        Returns True if the response is predominantly English.
+        Returns False if it's a Hinglish/Hindi sentence (>25% Hindi words).
+        Used to detect and replace full Hinglish sentences that strip_hinglish() can't fix.
+        """
+        import re
+        words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
+        if len(words) < 3:
+            return True  # Too short to judge, assume okay
+        hindi_count = sum(1 for w in words if w in cls._HINDI_WORD_SET)
+        hindi_ratio = hindi_count / len(words)
+        return hindi_ratio < 0.25  # Flag if >25% words are Hindi
+
+
     def __init__(self, persona_name: str):
         self.persona_name = persona_name
         self.conversation_memory: List[Dict[str, str]] = []
@@ -138,8 +169,14 @@ class BaseAgent(ABC):
                 )
                 self._update_state(scammer_message, response)
                 
-                # 🌍 Strip Hinglish before make_human post-processing
+                # 🌍 Strip word-level Hinglish
                 response = self.strip_hinglish(response)
+                
+                # 🛡️ Sentence-level English guard: if LLM generated full Hinglish, hard-replace
+                if not self.is_english_response(response):
+                    logger.warning(f"🚨 {self.persona_name} Turn {turn_count}: Hinglish sentence detected, replacing with English fallback")
+                    response = self._get_stateful_fallback(scammer_message, turn_count)
+                    response = self.strip_hinglish(response)
                 
                 # ✨ Make response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
@@ -195,12 +232,18 @@ class BaseAgent(ABC):
                 
                 messages.append(HumanMessage(content=scammer_message))
                 
-                # Try LLM with 5s timeout
-                response = await asyncio.wait_for(llm_client.ainvoke(messages), timeout=5.0)
+                # Try LLM with 3.5s timeout (must respond within GUVI's 5s limit)
+                response = await asyncio.wait_for(llm_client.ainvoke(messages), timeout=3.5)
                 self._update_state(scammer_message, response)
                 
-                # 🌍 Strip Hinglish from basic LLM response
+                # 🌍 Strip word-level Hinglish
                 response = self.strip_hinglish(response)
+                
+                # 🛡️ Sentence-level English guard: if LLM generated full Hinglish, hard-replace
+                if not self.is_english_response(response):
+                    logger.warning(f"🚨 {self.persona_name} Turn {turn_count}: Hinglish sentence in basic LLM, replacing")
+                    response = self._get_stateful_fallback(scammer_message, turn_count)
+                    response = self.strip_hinglish(response)
                 
                 # ✨ Make LLM response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
