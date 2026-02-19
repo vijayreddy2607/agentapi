@@ -122,10 +122,15 @@ class IntelligenceExtractor:
     
     def extract_from_history(self, conversation_history: list) -> 'Intelligence':
         """
-        Extract intelligence from ALL messages in conversation history.
-        Catches data that may have been missed in earlier turns.
+        Extract intelligence from SCAMMER messages only in conversation history.
+        Skips agent/user messages to prevent self-contamination
+        (e.g. agent saying 'SBI website is sbi.co.in' causing sbi.co to be extracted).
         """
         for msg in conversation_history:
+            sender = msg.get("sender", "") if isinstance(msg, dict) else getattr(msg, "sender", "")
+            # Only scan scammer messages — never our own agent replies
+            if sender not in ("scammer", "Scammer"):
+                continue
             text = msg.get("text", "") if isinstance(msg, dict) else getattr(msg, "text", "")
             if text:
                 self.extract_from_message(text)

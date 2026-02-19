@@ -27,19 +27,23 @@ class GroqClient:
         """
         self.primary_key = api_key or os.getenv("GROQ_API_KEY")
         self.backup_key = os.getenv("GROQ_BACKUP_KEY")
+        self.backup_key_2 = os.getenv("GROQ_BACKUP_KEY_2")
         self.current_key = self.primary_key
+        self._key_rotation_index = 0
+        self._all_keys = [k for k in [
+            self.primary_key,
+            self.backup_key,
+            self.backup_key_2
+        ] if k]  # Only include keys that are actually set
         
         if not self.primary_key:
             raise ValueError("Groq API key required. Set GROQ_API_KEY or pass api_key")
         
         self.base_url = "https://api.groq.com/openai/v1"
-        self.model = "meta-llama/llama-4-maverick-17b-128e-instruct"  # Updated: llama-3.1-70b deprecated
-        self.timeout = 4.0  # 4 second timeout (well under 5s limit)
+        self.model = "meta-llama/llama-4-maverick-17b-128e-instruct"
+        self.timeout = 4.0
         
-        if self.backup_key:
-            logger.info(f"GroqClient initialized with model: {self.model} (backup key available)")
-        else:
-            logger.info(f"GroqClient initialized with model: {self.model}")
+        logger.info(f"GroqClient initialized with {len(self._all_keys)} key(s), model: {self.model}")
     
     async def generate_response(
         self,
@@ -94,12 +98,20 @@ class GroqClient:
                 return generated_text
                 
         except httpx.HTTPStatusError as e:
-            # Check if rate limit error and backup key available
-            if e.response.status_code == 429 and self.backup_key and self.current_key != self.backup_key:
-                logger.warning(f"Primary Groq key rate limited, switching to backup key")
-                self.current_key = self.backup_key
-                # Retry with backup key
-                return await self.generate_response(system_prompt, user_message, temperature, max_tokens)
+            # 429 rate limit → rotate to next available key
+            if e.response.status_code == 429:
+                # Find next key in rotation that isn't the current one
+                try:
+                    current_idx = self._all_keys.index(self.current_key)
+                    next_keys = [k for i, k in enumerate(self._all_keys) if i > current_idx]
+                    if next_keys:
+                        self.current_key = next_keys[0]
+                        logger.warning(f"Groq key rate limited, rotating to key #{current_idx + 2} of {len(self._all_keys)}")
+                        return await self.generate_response(system_prompt, user_message, temperature, max_tokens)
+                    else:
+                        logger.error("All Groq keys rate limited")
+                except ValueError:
+                    pass
             logger.error(f"Groq API error: {e}")
             raise Exception(f"LLM error: {e}")
         except httpx.TimeoutException:
