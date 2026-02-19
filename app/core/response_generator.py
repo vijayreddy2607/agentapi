@@ -300,7 +300,7 @@ EXTRACTION FOCUS:
                     system_prompt=system_prompt,
                     user_message=user_message,
                     temperature=temperature,
-                    max_tokens=80  # Increased to 80 — ensures complete questions, no mid-sentence cut-off
+                    max_tokens=60  # 60 tokens ≈ 45 words — forces short human-like messages
                 ),
                 timeout=4.8
             )

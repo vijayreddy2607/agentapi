@@ -26,9 +26,10 @@ URL_PATTERN = re.compile(
 
 # 🆕 OBFUSCATED URL PATTERN: Catches "dot com", "[.]com", "hxxp://", etc.
 # Matches: sbi-secure dot com, example[.]com, bank-verify (dot) in, hxxp://scam
+# Negative lookbehind on bare domain: do NOT match 'sbi.com' inside 'support@sbi.com'
 OBFUSCATED_URL_PATTERN = re.compile(
     r'(?:https?|hxxps?|h\*\*p)://[^\s]+|'  # hxxp://scam
-    r'(?:[a-z0-9-]+)\s*(?:dot|\[?\.\]?|\(\s*dot\s*\))\s*(?:com|in|org|net|co|info)(?:/[^\s]*)?|'  # example dot com or (dot)
+    r'(?<!@)(?<![a-zA-Z0-9])(?:[a-z0-9][a-z0-9-]{2,})\s*(?:dot|\[?\.\]?|\(\s*dot\s*\))\s*(?:com|in|org|net|co|info)(?:/[^\s]*)?|'  # example dot com (not after @)
     r'(?:[a-z0-9-]+\[\.\][a-z]+(?:/[^\s]*)?)',  # example[.]com/path
     re.IGNORECASE
 )
