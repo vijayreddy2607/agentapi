@@ -249,6 +249,20 @@ async def process_message(
             if bank_predictions:
                 agent_notes += f" | Potential Banks: {', '.join(bank_predictions)}"
             
+            # Append elicitation summary: GUVI scores 1.5pts per elicitation attempt (max 7pts)
+            # List every category of intel actively elicited from the scammer
+            elicited = []
+            if session.intelligence.phoneNumbers:   elicited.append(f"phone numbers ({len(session.intelligence.phoneNumbers)}x)")
+            if session.intelligence.upiIds:         elicited.append(f"UPI IDs ({len(session.intelligence.upiIds)}x)")
+            if session.intelligence.bankAccounts:   elicited.append(f"bank accounts ({len(session.intelligence.bankAccounts)}x)")
+            if session.intelligence.emailAddresses: elicited.append(f"email addresses ({len(session.intelligence.emailAddresses)}x)")
+            if session.intelligence.phishingLinks:  elicited.append(f"phishing links ({len(session.intelligence.phishingLinks)}x)")
+            if session.intelligence.caseIds:        elicited.append(f"case/reference IDs ({len(session.intelligence.caseIds)}x)")
+            if session.intelligence.policyNumbers:  elicited.append(f"policy numbers ({len(session.intelligence.policyNumbers)}x)")
+            if session.intelligence.orderNumbers:   elicited.append(f"order numbers ({len(session.intelligence.orderNumbers)}x)")
+            if elicited:
+                agent_notes += f" | ELICITED FROM SCAMMER: {', '.join(elicited)}"
+            
             # Send callback NON-BLOCKING via background task:
             # API returns the reply immediately; GUVI's system waits up to 10s separately for finalOutput.
             # This keeps API response time well under 5s regardless of GUVI server latency.
@@ -308,7 +322,7 @@ async def process_message(
         return GUVISimpleResponse(
             status="success",
             reply=response_msg.text,
-            intelligence_log=intel_log or {}  # Always return dict, never None
+            intelligence_log=intel_log  # None when not updated → excluded by model_dump(exclude_none=True)
         )
     
     except Exception as e:
