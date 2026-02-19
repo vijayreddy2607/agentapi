@@ -25,7 +25,6 @@ scam_detector = ScamDetector()
 
 
 @router.post("/", response_model=GUVISimpleResponse)  # Root endpoint
-@router.post("/honeypot", response_model=GUVISimpleResponse)  # GUVI submission format alias
 @router.post("/api/message", response_model=GUVISimpleResponse)  # Compatibility alias
 async def process_message(
     request: MessageRequest,
