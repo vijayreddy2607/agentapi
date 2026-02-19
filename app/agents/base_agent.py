@@ -169,16 +169,10 @@ class BaseAgent(ABC):
                 )
                 self._update_state(scammer_message, response)
                 
-                # 🌍 Strip word-level Hinglish
+                # Strip word-level Hinglish artifacts (stray words, not intentional Hinglish)
                 response = self.strip_hinglish(response)
                 
-                # 🛡️ Sentence-level English guard: if LLM generated full Hinglish, hard-replace
-                if not self.is_english_response(response):
-                    logger.warning(f"🚨 {self.persona_name} Turn {turn_count}: Hinglish sentence detected, replacing with English fallback")
-                    response = self._get_stateful_fallback(scammer_message, turn_count)
-                    response = self.strip_hinglish(response)
-                
-                # ✨ Make response more human-like!
+                # Make response more human-like
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 
                 logger.info(f"✅ {self.persona_name} Turn {turn_count} Advanced LLM SUCCESS: {response[:50]}...")
@@ -188,11 +182,7 @@ class BaseAgent(ABC):
                 logger.warning(f"❌ {self.persona_name} Turn {turn_count} Advanced LLM ERROR: {e}, using fallback")
                 response = self._get_stateful_fallback(scammer_message, turn_count)
                 self._update_state(scammer_message, response)
-                
-                # 🌍 Strip Hinglish from fallback
                 response = self.strip_hinglish(response)
-                
-                # ✨ Make fallback response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 return response
         else:
@@ -236,16 +226,10 @@ class BaseAgent(ABC):
                 response = await asyncio.wait_for(llm_client.ainvoke(messages), timeout=3.5)
                 self._update_state(scammer_message, response)
                 
-                # 🌍 Strip word-level Hinglish
+                # Strip word-level Hinglish artifacts
                 response = self.strip_hinglish(response)
                 
-                # 🛡️ Sentence-level English guard: if LLM generated full Hinglish, hard-replace
-                if not self.is_english_response(response):
-                    logger.warning(f"🚨 {self.persona_name} Turn {turn_count}: Hinglish sentence in basic LLM, replacing")
-                    response = self._get_stateful_fallback(scammer_message, turn_count)
-                    response = self.strip_hinglish(response)
-                
-                # ✨ Make LLM response more human-like!
+                # Make LLM response more human-like
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 
                 logger.info(f"✅ {self.persona_name} Turn {turn_count} Basic LLM SUCCESS: {response[:50]}...")
