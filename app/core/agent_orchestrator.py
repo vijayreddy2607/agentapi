@@ -5,7 +5,7 @@ from typing import Literal, Optional, List, Dict, Any
 from app.agents import UncleAgent, WorriedAgent, TechSavvyAgent, AuntyAgent, StudentAgent, BaseAgent
 from app.agents.intelligence_analyst_agent import intelligence_analyst
 from app.agents.conversation_director_agent import conversation_director
-from app.core.session_manager import Session
+from app.core.session_manager import Session, ScammerConversationState
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,52 @@ class AgentOrchestrator:
         )
         logger.info(f"[INTELLIGENCE_LOG] {intel_log}")
 
-        # ── STEP 2: ConversationDirectorAgent decides strategy ────────────────────
+        # ── STEP 1b: Update ScammerConversationState from this turn ──────────────
+        state: ScammerConversationState = session.scammer_state
+
+        # Mark what scammer shared this turn (from intel_log)
+        if intel_log.get("upi_ids"):
+            state.mark_shared("upi_id")
+        if intel_log.get("phone_numbers"):
+            state.mark_shared("phone")
+        if intel_log.get("emails"):
+            state.mark_shared("email")
+        if intel_log.get("urls") or intel_log.get("links"):
+            state.mark_shared("url")
+        if intel_log.get("bank_accounts"):
+            state.mark_shared("bank_account")
+
+        # Detect refusals in scammer message — mark specific field refused
+        _refusal_phrases = [
+            "cannot give", "can't give", "cant give", "cannot share",
+            "not allowed", "should not give", "won't give", "wont give",
+            "not supposed to", "security reasons", "confidential",
+            "why do you need", "just proceed", "stop asking",
+        ]
+        scammer_lower = scammer_message.lower()
+        if any(p in scammer_lower for p in _refusal_phrases):
+            if any(w in scammer_lower for w in ["number", "phone", "mobile", "contact", "whatsapp"]):
+                state.mark_refused("phone")
+            elif any(w in scammer_lower for w in ["email", "mail"]):
+                state.mark_refused("email")
+            elif any(w in scammer_lower for w in ["upi", "link", "website", "url"]):
+                state.mark_refused("url")
+            logger.info(f"[State] Refusal detected. refused={state.refused_fields}")
+
+        # Count pressure and suspicion signals
+        if any(w in scammer_lower for w in ["urgent", "immediately", "block", "suspend", "hurry", "deadline"]):
+            state.add_urgency()
+            state.add_tactic("urgency")
+        if any(w in scammer_lower for w in ["legal", "police", "court", "arrest", "warrant", "penalty"]):
+            state.add_tactic("threat")
+        if any(w in scammer_lower for w in ["rbi", "cbi", "government", "officer", "official"]):
+            state.add_tactic("authority")
+        if any(w in scammer_lower for w in ["bot", "ai", "automated", "robot", "fake", "not real"]):
+            state.add_suspicion()
+
+        logger.info(f"[State] shared={state.shared_fields}, refused={state.refused_fields}, urgency={state.urgency_count}, suspicion={state.suspicion_count}")
+
+        # ── STEP 2: ConversationDirectorAgent decides strategy ──────────────────
         # Build accumulated intelligence dict from session
         accumulated_intel = {}
         if hasattr(session, 'intelligence') and session.intelligence:
@@ -137,6 +182,11 @@ class AgentOrchestrator:
 
         # ── STEP 4: Build additional context for persona agent ────────────────────
         additional_context = director_decision.get("additional_context", "")
+
+        # Inject ScammerConversationState summary — tells LLM what was shared/refused
+        state_summary = session.scammer_state.summary()
+        if state_summary:
+            additional_context = f"CONVERSATION MEMORY:\n{state_summary}\n\n{additional_context}"
 
         # Add RL strategy if provided
         if rl_action:

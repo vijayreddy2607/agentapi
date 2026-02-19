@@ -1,11 +1,86 @@
 """Session management for tracking conversations."""
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Set
 from datetime import datetime
 from app.models import Intelligence, Message
 from app.agents import BaseAgent
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class ScammerConversationState:
+    """
+    Lightweight in-memory tracker for what we know about the scammer
+    within the CURRENT conversation. Resets every session — no DB needed.
+
+    Tracks:
+    - refused_fields:   things scammer refused to share (don't ask again)
+    - shared_fields:    things scammer already gave (don't re-ask)
+    - urgency_count:    how many urgency/threat lines scammer used
+    - suspicion_count:  how many times scammer seemed suspicious of us
+    - tactics_seen:     set of tactic types scammer has used (urgency, threat, authority)
+    """
+
+    def __init__(self):
+        self.refused_fields: Set[str] = set()       # e.g. {"phone", "email"}
+        self.shared_fields: Set[str] = set()        # e.g. {"upi_id", "url", "phone"}
+        self.urgency_count: int = 0                 # how many urgency lines used
+        self.suspicion_count: int = 0               # how suspicious of us
+        self.tactics_seen: Set[str] = set()         # urgency / threat / authority
+
+    def mark_refused(self, field: str):
+        """Scammer refused to share this field."""
+        self.refused_fields.add(field.lower())
+
+    def mark_shared(self, field: str):
+        """Scammer shared this field — don't ask for it again."""
+        self.shared_fields.add(field.lower())
+        # If they shared it, remove from refused
+        self.refused_fields.discard(field.lower())
+
+    def add_urgency(self):
+        self.urgency_count += 1
+
+    def add_suspicion(self):
+        self.suspicion_count += 1
+
+    def add_tactic(self, tactic: str):
+        self.tactics_seen.add(tactic.lower())
+
+    def was_refused(self, field: str) -> bool:
+        return field.lower() in self.refused_fields
+
+    def was_shared(self, field: str) -> bool:
+        return field.lower() in self.shared_fields
+
+    @property
+    def is_suspicious(self) -> bool:
+        """True if scammer seems suspicious of the agent."""
+        return self.suspicion_count >= 2
+
+    @property
+    def is_high_pressure(self) -> bool:
+        """True if scammer is applying lots of urgency/threat pressure."""
+        return self.urgency_count >= 3
+
+    def safe_to_ask(self, field: str) -> bool:
+        """Returns True if it's safe to ask for this field (not refused AND not already shared)."""
+        return not self.was_refused(field) and not self.was_shared(field)
+
+    def summary(self) -> str:
+        """Human-readable state summary for injection into LLM context."""
+        lines = []
+        if self.shared_fields:
+            lines.append(f"Scammer ALREADY GAVE: {', '.join(self.shared_fields)} — DO NOT ask again.")
+        if self.refused_fields:
+            lines.append(f"Scammer REFUSED to share: {', '.join(self.refused_fields)} — DO NOT ask again, pivot to something else.")
+        if self.is_high_pressure:
+            lines.append(f"Scammer used urgency/threats {self.urgency_count}x — they're getting aggressive. Show more hesitation.")
+        if self.is_suspicious:
+            lines.append(f"Scammer seems suspicious of you ({self.suspicion_count}x). Be more natural, less question-heavy.")
+        if self.tactics_seen:
+            lines.append(f"Tactics seen: {', '.join(self.tactics_seen)}")
+        return "\n".join(lines) if lines else ""
 
 
 class Session:
@@ -24,6 +99,8 @@ class Session:
         self.agent_messages = 0
         self.scammer_messages = 0
         self.is_complete = False
+        # ── In-session scammer state tracker (no DB, resets per conversation) ──
+        self.scammer_state = ScammerConversationState()
     
     def add_message(self, message: Message):
         """Add a message to conversation history."""
