@@ -11,7 +11,13 @@ BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{11,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})
 
 # Phone Number Pattern: Indian phone numbers (various formats)
 # Matches: 9876543210, 98765-43210, +91-9876543210, +91 98765 43210
-PHONE_PATTERN = re.compile(r'(\+?91[-\s]?[6-9]\d{4}[-\s]?\d{5}|\b[6-9]\d{4}[-\s]?\d{5}\b|\+?91[-\s]?[6-9]\d{9}|\b[6-9]\d{9}\b)')
+# Also matches +91-1xxxxxxxxx (tech support / toll-free style numbers used in GUVI scenarios)
+PHONE_PATTERN = re.compile(
+    r'(\+?91[-\s]?[0-9]\d{9}'          # +91 followed by ANY 10 digits (covers 1xxx, 6-9xxx)
+    r'|\+?91[-\s]?[6-9]\d{4}[-\s]?\d{5}'  # +91-98765 43210
+    r'|\b[6-9]\d{4}[-\s]?\d{5}\b'         # 98765 43210 (no country code)
+    r'|\b[6-9]\d{9}\b)'                    # 9876543210 (10 digit)
+)
 
 # URL Pattern: http/https links
 URL_PATTERN = re.compile(
@@ -75,7 +81,7 @@ WRITTEN_NUMBER_MAP = {
     'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'
 }
 WRITTEN_NUMBER_PATTERN = re.compile(
-    r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine)(?:\s+(?:zero|one|two|three|four|five|six|seven|eight|nine)){4,}\b',
+    r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine)(?:\s+(?:zero|one|two|three|four|five|six|seven|eight|nine)){2,}\b',
     re.IGNORECASE
 )
 

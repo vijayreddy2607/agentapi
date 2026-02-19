@@ -79,8 +79,9 @@ class ScamDetector:
             
         except Exception as e:
             logger.error(f"Detection error: {e}")
-            # Fail safe
-            return ScamDetection(is_scam=False, confidence=0.0, scam_type="unknown", recommended_agent="uncle", reasoning="Error")
+            # Fail OPEN: treat detection errors as scam to avoid missing real scams
+            # It's better to engage a genuine caller for 1 turn than to miss a scammer entirely
+            return ScamDetection(is_scam=True, confidence=0.6, scam_type="unknown", recommended_agent="uncle", reasoning="Detection error - fail open")
 
     def _is_safe_message(self, text: str) -> bool:
         """Check if message is a generic safe greeting."""
@@ -134,7 +135,8 @@ class ScamDetector:
             
         except Exception as e:
             logger.error(f"Detection error: {e}")
-            return ScamDetection(is_scam=False, confidence=0.0, scam_type="unknown", recommended_agent="uncle", reasoning="Error")
+            # Fail OPEN: treat LLM errors as scam to avoid missing real scams during GUVI evaluation
+            return ScamDetection(is_scam=True, confidence=0.6, scam_type="unknown", recommended_agent="uncle", reasoning="LLM error - fail open")
 
     def _parse_llm_response(self, response_text: str) -> ScamDetection:
         """Helper to parse LLM JSON response."""

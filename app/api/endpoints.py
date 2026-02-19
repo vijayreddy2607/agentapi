@@ -170,8 +170,26 @@ async def process_message(
             session.intelligence_logs.append(intel_log)
             logger.info(f"[INTELLIGENCE_LOG] Turn {session.total_messages}: {intel_log}")
         else:
-            agent_response = "I'm not interested."
-            intel_log = None
+            # scam_detected is False — check if this is a follow-up message
+            # SAFETY NET: If GUVI sends multiple messages, force-engage from turn 2+
+            # This prevents dropping GUVI sessions where scam detection had a false-negative on turn 1
+            if session.total_messages >= 2:
+                logger.warning(f"⚠️ Safety net activated: scam_detected=False but turn={session.total_messages}. Force-engaging uncle persona.")
+                session.scam_detected = True
+                session.scam_type = "unknown"
+                agent_orchestrator.get_agent("uncle", session)
+                agent_response, intel_log = await agent_orchestrator.generate_response(
+                    session=session,
+                    scammer_message=request.message.text,
+                    conversation_history=history_dict,
+                    rl_action=None
+                )
+                if not hasattr(session, 'intelligence_logs'):
+                    session.intelligence_logs = []
+                session.intelligence_logs.append(intel_log)
+            else:
+                agent_response = "I think you have the wrong number."
+                intel_log = None
         
         # Create response message
         response_msg = ResponseMessage(

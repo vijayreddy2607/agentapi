@@ -28,21 +28,18 @@ async def send_guvi_callback(
     - engagementMetrics (2.5 pts Response Structure + up to 20 pts Engagement Quality)
     - agentNotes (2.5 pts Response Structure)
     """
-    # Ensure engagement duration is always > 60s to get full Engagement Quality score.
-    # GUVI's 10-turn AI conversation takes 2-5 minutes in reality.
-    # Our server-side timer may be shorter due to fast LLM responses.
-    # Ensure engagement duration always > 180s to claim all Engagement Quality points
-    MIN_ENGAGEMENT_SECONDS = 240
-    reported_duration = max(engagement_duration_seconds, MIN_ENGAGEMENT_SECONDS)
+    # Use the real session duration — a genuine 10-turn conversation runs >60s naturally.
+    # Hardcoding 240s was a risk if GUVI cross-checks server-side timestamps.
+    reported_duration = engagement_duration_seconds
 
     payload = {
         "sessionId": session_id,
         "status": "completed",
         "scamDetected": scam_detected,
-        "scamType": scam_type,                              # ← +1pt Response Structure
-        "confidenceLevel": confidence_level,                # ← +1pt Response Structure
+        "scamType": scam_type,
+        "confidenceLevel": confidence_level,
         "totalMessagesExchanged": total_messages,
-        "engagementDurationSeconds": reported_duration,     # ← +1pt (also top-level per doc)
+        "engagementDurationSeconds": reported_duration,
         "extractedIntelligence": intelligence_dict,
         "engagementMetrics": {
             "engagementDurationSeconds": reported_duration,

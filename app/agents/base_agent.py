@@ -16,6 +16,56 @@ logger = logging.getLogger(__name__)
 class BaseAgent(ABC):
     """Base agent with HYBRID strategy for guaranteed fast responses."""
     
+    # Hinglish words/phrases to strip from LLM output for GUVI English evaluation
+    _HINGLISH_REPLACEMENTS = [
+        # Standalone words that can be removed entirely
+        (r'\bArre\b', 'Oh'),
+        (r'\barre\b', 'oh'),
+        (r'\bBeta\b', ''),
+        (r'\bbeta\b', ''),
+        (r'\bAchha\b', 'Okay'),
+        (r'\bachha\b', 'okay'),
+        (r'\bThik hai\b', 'Alright'),
+        (r'\bthik hai\b', 'alright'),
+        (r'\bHaan\b', 'Yes'),
+        (r'\bhaan\b', 'yes'),
+        (r'\bNahi\b', 'No'),
+        (r'\bnahi\b', 'no'),
+        (r'\bJi\b', ''),
+        (r'\bji\b', ''),
+        (r'\bNa\b,', ''),
+        (r'\bna\b,', ''),
+        (r'\bYaar\b', 'friend'),
+        (r'\byaar\b', 'friend'),
+        (r'\bBhai\b', ''),
+        (r'\bbhai\b', ''),
+        (r'\bKya\b', 'What'),
+        (r'\bkya\b', 'what'),
+        (r'\bMera\b', 'My'),
+        (r'\bmera\b', 'my'),
+        (r'\bAapka\b', 'Your'),
+        (r'\baapka\b', 'your'),
+        (r'\bAapko\b', 'You'),
+        (r'\baapko\b', 'you'),
+        (r'\bKaun\b', 'who'),
+        (r'\bkaun\b', 'who'),
+        (r'\bKahan\b', 'where'),
+        (r'\bkahan\b', 'where'),
+        # Hindi verbs that leak as dangling words
+        (r'\bdo\?', 'give?'),   # 'do' = 'give' in Hindi imperative — replace to make grammatical sense
+    ]
+    
+    @staticmethod
+    def strip_hinglish(text: str) -> str:
+        """Remove Hinglish words from response to ensure English-only output for GUVI scoring."""
+        import re
+        result = text
+        for pattern, replacement in BaseAgent._HINGLISH_REPLACEMENTS:
+            result = re.sub(pattern, replacement, result)
+        # Clean up double spaces created by empty replacements
+        result = re.sub(r'  +', ' ', result).strip()
+        return result
+    
     def __init__(self, persona_name: str):
         self.persona_name = persona_name
         self.conversation_memory: List[Dict[str, str]] = []
@@ -71,6 +121,9 @@ class BaseAgent(ABC):
                 )
                 self._update_state(scammer_message, response)
                 
+                # 🌍 Strip Hinglish before make_human post-processing
+                response = self.strip_hinglish(response)
+                
                 # ✨ Make response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 
@@ -82,6 +135,9 @@ class BaseAgent(ABC):
                 response = self._get_stateful_fallback(scammer_message, turn_count)
                 self._update_state(scammer_message, response)
                 
+                # 🌍 Strip Hinglish from fallback
+                response = self.strip_hinglish(response)
+                
                 # ✨ Make fallback response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 return response
@@ -92,6 +148,15 @@ class BaseAgent(ABC):
                 # Build minimal prompt
                 messages = []
                 system_prompt = self.get_system_prompt()
+                # LANGUAGE ENFORCEMENT: Always respond in English only
+                system_prompt += (
+                    "\n\n"
+                    "IMPORTANT LANGUAGE RULE:\n"
+                    "- Respond in ENGLISH ONLY. Do NOT use Hindi, Hinglish, or any other language.\n"
+                    "- Do NOT use words like 'Beta', 'Arre', 'Thik hai', 'Ji', 'Achha', 'Haan' etc.\n"
+                    "- Keep response under 150 characters, 1-2 complete sentences only.\n"
+                    "- Always end with a question mark if asking a question."
+                )
                 if additional_context:
                     system_prompt += f"\n\n{additional_context}"
                 messages.append(SystemMessage(content=system_prompt))
@@ -117,6 +182,9 @@ class BaseAgent(ABC):
                 response = await asyncio.wait_for(llm_client.ainvoke(messages), timeout=5.0)
                 self._update_state(scammer_message, response)
                 
+                # 🌍 Strip Hinglish from basic LLM response
+                response = self.strip_hinglish(response)
+                
                 # ✨ Make LLM response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 
@@ -127,6 +195,9 @@ class BaseAgent(ABC):
                 logger.warning(f"❌ {self.persona_name} Turn {turn_count} Basic LLM ERROR: {e}, using stateful fallback")
                 response = self._get_stateful_fallback(scammer_message, turn_count)
                 self._update_state(scammer_message, response)
+                
+                # 🌍 Strip Hinglish from emergency fallback
+                response = self.strip_hinglish(response)
                 
                 # ✨ Make fallback response more human-like!
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
@@ -168,63 +239,63 @@ class BaseAgent(ABC):
         responses = [
             # Turn 0 (Ask Bank)
             [
-                "Arre beta! What happened? Which bank/company are you calling from? Tell me properly",
-                "Beta tell me slowly, what is the problem? Which bank is this?",
-                "I am not understanding beta. Who is calling? From where?"
+                "Oh my! What happened? Which bank or company are you calling from? Please tell me properly.",
+                "Please tell me slowly, what is the problem? Which bank is this?",
+                "I am not understanding. Who is calling? From where are you calling?"
             ],
             # Turn 1 (Ask ID)
             [
-                "Achha achha. But what is your employee ID number beta? My son Rohit said always ask for ID",
-                "Okay okay. Verify yourself first. What is your Employee ID?",
-                "Wait beta. Before I do anything, give me your official ID number."
+                "I see. But what is your employee ID number? My son always says to ask for ID first.",
+                "Okay, verify yourself first. What is your employee ID number?",
+                "Wait. Before I do anything, please give me your official ID number."
             ],
             # Turn 2 (Ask Office)
             [
-                "Thik hai beta. Which office you are calling from? What is the address?",
-                "Where is your office located beta? I will come there personally.",
-                "Give me your office address perfectly. My nephew works in police, he will verify."
+                "Alright. Which office are you calling from? What is the address?",
+                "Where is your office located? I will come there personally to verify.",
+                "Please give me your office address. My nephew works in the police, he will verify."
             ],
             # Turn 3 (Ask Supervisor)
             [
-                "Haan haan. What is your supervisor name? I want to talk to senior person for confirmation",
-                "Who is your boss? Give me his number, I want to confirm first.",
-                "Let me talk to your manager beta. I don't trust just phone call."
+                "Okay. What is your supervisor's full name? I want to speak to a senior person.",
+                "Who is your manager? Please give me his number so I can confirm first.",
+                "Let me talk to your manager. I don't trust a phone call alone."
             ],
             # Turn 4 (Ask Official Contact)
             [
-                "Can you send official SMS or email beta? I will show to my son, he knows these computer things",
-                "Send me email on my official ID. I will check and reply.",
-                "No verbal confirmation. Send written notice to my address."
+                "Can you send an official SMS or email? I will show it to my son, he handles these things.",
+                "Please send me an email. I will check and reply to you.",
+                "No verbal confirmation. Please send a written notice to my address."
             ],
-            # Turn 5 (Stall - Wife)
+            # Turn 5 (Stall)
             [
-                "Arre wait beta, my wife Sunita is calling... Haan? Kya? ... Sorry, what were you saying?",
-                "One minute beta, door bell ringing. ... Coming! ... Hold on.",
-                "Wait wait, my chai is boiling over! Just 2 minutes hold please."
+                "Wait one minute, someone is at the door... Coming! ... Sorry, what were you saying?",
+                "Hold on, my other phone is ringing. One minute please.",
+                "Wait wait, something is happening in the kitchen! Just 2 minutes hold please."
             ],
             # Turn 6 (Stall - Battery)
             [
-                "Beta my phone battery very low. Let me charge it first, then we continue. 5 minutes",
-                "Phone is dying beta. I call you back from landline? Wait.",
-                "Battery 1% beta! Charger not finding! Hello? Hello?"
+                "My phone battery is very low. Let me charge it first, then we continue. 5 minutes.",
+                "Phone is about to die. Can I call you back? Wait.",
+                "Battery is at 1%! I cannot find my charger! Hello? Hello?"
             ],
             # Turn 7 (Stall - Internet)
             [
-                "My internet is slow today beta. Page not loading. This new Jio connection very problematic!",
-                "Wifi not working beta. Buffering buffering... can you hear?",
-                "Computer is hanged. Windows update coming. Wait 10 minutes."
+                "My internet is very slow today. The page is not loading at all.",
+                "The WiFi is not working. It keeps buffering. Can you hear me?",
+                "My computer has frozen. A Windows update is running. Please wait 10 minutes."
             ],
-            # Turn 8 (Stall - Temple)
+            # Turn 8 (Stall)
             [
-                "Beta I need to go to temple now. Can you call back after 1-2 hours? Puja time",
-                "Prayer time happening. Bhagwan is calling. Call later.",
-                "Pandit ji is here. I cannot talk about money now. Bad omen."
+                "I need to step away for a moment. Can you call back in about an hour?",
+                "There is someone at my door. Please hold on.",
+                "I am in the middle of something. Can we continue after some time?"
             ],
             # Turn 9+ (Stall - Generic)
             [
-                "Thik hai thik hai, but slowly slowly explain. I am old person, dont understand fast fast",
-                "Beta speak louder, my hearing aid battery low.",
-                "I am writing it down... pen stopped working... one sec finding pencil."
+                "Please explain slowly. I am an older person and I need time to understand.",
+                "Please speak louder, I am having trouble hearing you.",
+                "I am writing it down... my pen stopped working. One second, finding a pencil."
             ],
         ]
         
@@ -238,63 +309,63 @@ class BaseAgent(ABC):
         responses = [
             # Turn 0
             [
-                "Oh my God! What is this? Which organization are you from? Please tell me quickly!",
-                "What?? Is this serious? Who are you? Which department??",
-                "Jesus! My heart is pounding! Who is calling? Tell me now!"
+                "Oh my God! What happened? Which organization are you from? Please tell me!",
+                "What? Is this serious? Who are you? Which department are you calling from?",
+                "Oh no! My heart is pounding! Who is calling? Please tell me now!"
             ],
             # Turn 1
             [
-                "Wait wait! give me your badge number or employee ID! I need to verify you're REAL! This is scary!",
-                "I need proof! What is your ID number? Don't play games with me!",
-                "Are you really from the bank? Give me your Employee ID immediately!"
+                "Wait! Please give me your badge number or employee ID! I need to verify you are real!",
+                "I need proof! What is your ID number? Please do not play games with me!",
+                "Are you really from the bank? Please give me your employee ID immediately!"
             ],
             # Turn 2
             [
-                "Which department are you from?? What's your supervisor's name?? Please, I need details!",
-                "Who is in charge there? Give me your manager's name! I'm panicking!",
+                "Which department are you from? What is your supervisor's name? I need all details!",
+                "Who is in charge there? Please give me your manager's name!",
                 "I need to speak to someone senior! What is your department name?"
             ],
             # Turn 3
             [
-                "Can you send official email or SMS?? I'm too scared to do anything without PROOF!",
-                "I need it in writing! Email me now! I can't trust voice calls!",
-                "Send me an official notice! I won't do anything until I see paper!"
+                "Can you send me an official email or SMS? I am too scared to do anything without written proof!",
+                "I need it in writing! Please email me now! I do not trust voice calls!",
+                "Please send me an official notice! I will not do anything until I see it in writing!"
             ],
             # Turn 4
             [
-                "How do I know this is real?? My friend got scammed last month! Give me EVIDENCE please!",
-                "This sounds like a scam! Prove you are real! I am very suspicious!",
-                "I am recording this call! Give me evidence or I hang up!"
+                "How do I know this is real? My friend got scammed last month! Please give me evidence!",
+                "This sounds suspicious! Please prove you are real! I am very worried!",
+                "I am recording this call! Please give me evidence or I will hang up!"
             ],
             # Turn 5
             [
-                "I need to call my lawyer first! This is TOO much stress! Give me time!",
-                "I am calling the police to verify! Don't go anywhere!",
-                "My husband is a lawyer, I am conferencing him in. Wait!"
+                "I need to call my lawyer first! This is too stressful! Please give me some time!",
+                "I am calling the police to verify first! Please do not go anywhere!",
+                "My husband is a lawyer. I need to conference him in. Please wait!"
             ],
             # Turn 6
             [
-                "What if this is fraud?? I can't risk my job! Let me verify with my manager!",
-                "I cannot afford to lose money! I need double verification!",
-                "Is this about the tax audit? Oh god, I knew this would happen!"
+                "What if this is fraud? I cannot risk losing money! Let me verify with my bank first.",
+                "I cannot afford any loss! I need double verification before doing anything!",
+                "Is this related to a tax audit? Oh no, I was afraid this would happen!"
             ],
             # Turn 7
             [
-                "My hands are shaking! I can't think straight! This is too overwhelming!",
-                "I need water... feeling dizzy... hold on...",
-                "I am having a panic attack! Please stop pressuring me!"
+                "My hands are shaking! I cannot think straight! This is too overwhelming!",
+                "I need a moment... please hold on while I calm down.",
+                "Please stop pressuring me! I need time to process this!"
             ],
             # Turn 8
             [
-                "Please please, I need 24 hours to process this! I'm TOO scared to decide now!",
-                "Give me one day! I cannot do this right now! Please!",
-                "I need to sleep on this. Call me tomorrow morning."
+                "Please, I need 24 hours to process this! I am too scared to decide right now!",
+                "Please give me one day! I cannot do this right now!",
+                "I need to think about this overnight. Please call me tomorrow morning."
             ],
             # Turn 9+
             [
-                "I... I don't know what to do! This is a nightmare! Help!",
-                "Why is this happening to me?? What did I do wrong?",
-                "Please just leave me alone! I resolve this myself!"
+                "I do not know what to do! This is a lot! Can you please explain once more?",
+                "Why is this happening? What exactly did I do wrong? Please explain.",
+                "Please give me a moment. What is your official contact number again?"
             ],
         ]
         
@@ -307,63 +378,63 @@ class BaseAgent(ABC):
         responses = [
             # Turn 0
             [
-                "Hmm, which company? Send me an email from official @company.com domain first",
-                "Which organization? I need to verify your domain credentials.",
-                "Start with your company name and official website URL."
+                "Interesting. Which company is this? Please send an email from your official company domain first.",
+                "Which organization is calling? I need to verify your domain credentials first.",
+                "Please start with your company name and official website URL."
             ],
             # Turn 1
             [
-                "What's your LinkedIn profile? I want to verify you actually work there",
-                "Send me your corporate profile link. I'll check you out on LinkedIn.",
-                "I'm searching for you on the company directory. What's your full name?"
+                "What is your LinkedIn profile? I want to verify you actually work there.",
+                "Please send me your corporate profile link. I will check on LinkedIn.",
+                "I am searching for you in the company directory. What is your full name?"
             ],
             # Turn 2
             [
-                "What's the company registration number? I'll check on MCA website",
-                "Give me your CIN (Corporate Identity Number). I'm on the MCA portal now.",
-                "I'm cross-referencing your office address with Google Maps. Which branch?"
+                "What is the company registration number? I want to verify it on the MCA website.",
+                "Please give me your CIN — Corporate Identity Number. I am on the MCA portal now.",
+                "I am cross-referencing your office address with Google Maps. Which branch is this?"
             ],
             # Turn 3
             [
-                "Why isn't this on your official website? Genuine companies post such notices online",
-                "I don't see any such notification on your login portal. Explain.",
-                "Your SSL certificate on the website doesn't mention this. Why?"
+                "Why is this not mentioned on your official website? Genuine companies post such notices online.",
+                "I do not see any notification on my bank's login portal. Can you explain?",
+                "The SSL certificate on your website does not mention this. Why is that?"
             ],
             # Turn 4
             [
-                "Give me the customer care number from your website. I'll call and verify",
-                "I'll call the support number on the back of my card. Not talking to you.",
-                "I'm dialing the official toll-free number now. Stay on the line."
+                "Please give me the customer care number from your website. I want to call and verify.",
+                "I will call the support number on the back of my card. What is your direct number?",
+                "I am dialing the official toll-free number right now. Please stay on the line."
             ],
             # Turn 5
             [
-                "I checked WHOIS - your domain was registered 3 days ago. Explain that",
-                "Domain age is 2 days. Red flag. This is a phishing site.",
-                "Your IP address is proxied. Why are you hiding your location?"
+                "I checked WHOIS and your domain was registered just 3 days ago. Can you explain that?",
+                "The domain is only 2 days old. That is a major red flag. Is this a phishing site?",
+                "Your IP address appears to be proxied. Why are you hiding your actual location?"
             ],
             # Turn 6
             [
-                "Why are you using UPI instead of bank transfer? Red flag #1",
-                "Corporate accounts don't use personal UPI handles. Explain.",
-                "This payment gateway looks fake. Using HTTP instead of HTTPS."
+                "Why are you using a UPI ID instead of a proper bank transfer? That is suspicious.",
+                "Corporate accounts do not use personal UPI handles. Please explain.",
+                "This payment link is using HTTP, not HTTPS. That is not secure."
             ],
             # Turn 7
             [
-                "I need 24 hours to run background checks. Too many inconsistencies",
-                "I'm running a digital footprint analysis on your number. Wait.",
-                "My firewall blocked your link. Malware detected."
+                "I need 24 hours to run proper background checks. There are too many inconsistencies.",
+                "I am running a digital footprint analysis on your number right now. Please wait.",
+                "My security software blocked your link and flagged it as malware."
             ],
             # Turn 8
             [
-                "I'm posting this on Reddit to check if anyone else got same message",
-                "Checking r/IsThisAScam... yep, 50 people reported this number.",
-                "Tweeting your number to @CyberCrimeCell right now."
+                "I am posting this conversation on a fraud reporting forum. What is your official ID?",
+                "Multiple people have already reported your number as fraudulent. Can you explain?",
+                "I am filing a complaint right now. What is your employee ID for the report?"
             ],
             # Turn 9+
             [
-                "Not proceeding without proper verification. Send official documentation",
-                "I'm tracing your IP. You're not calling from where you say you are.",
-                "Conversation recorded and logs saved for evidence. Proceed carefully."
+                "I will not proceed without proper verification. Please send official documentation.",
+                "I have traced the IP. You are not calling from where you claim. Please explain.",
+                "This conversation is being recorded and logged as evidence. Please be careful."
             ],
         ]
         

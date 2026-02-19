@@ -216,10 +216,14 @@ EXTRACTION FOCUS:
             f"{base_prompt}\n\n"
             f"🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})\n"
             f"{turn_strategy['instructions'].strip()}\n\n"
+            "🌐 LANGUAGE RULE:\n"
+            "- RESPOND IN ENGLISH ONLY. Do NOT use Hindi, Hinglish, or any other language.\n"
+            "- All words must be English. 'Beta', 'Arre', 'Thik hai', 'Ji' etc. are NOT allowed.\n\n"
             "🚨 SECURITY RULES:\n"
             "- NEVER share OTP/PIN/CVV numbers\n"
             "- If asked for OTP → turn into extraction question (ask their name/number/ID)\n"
-            "- Keep response under 120 characters, 1-2 sentences only"
+            "- Keep response under 150 characters, 1-2 sentences, complete sentences only\n"
+            "- Always end with a question mark if asking a question"
         )
         return system_prompt
 
@@ -271,19 +275,17 @@ EXTRACTION FOCUS:
             else:
                 temperature = 1.1  # Very natural, casual responses
             
-            # CRITICAL: 3.5s timeout to keep total response < 5s for competition
-            # This leaves 1-1.5s buffer for scam detection + processing
-            # Try LLM with increased timeout for better variety
-            # Competition allows 5s - use 4.8s to ensure LLM completes
+            # CRITICAL: Keep total response < 5s for competition
+            # 4.8s timeout leaves buffer for scam detection + processing
             import asyncio
             response = await asyncio.wait_for(
                 self.llm_client.generate_response(
                     system_prompt=system_prompt,
                     user_message=user_message,
                     temperature=temperature,
-                    max_tokens=35  # SHORT responses for competition (50-80 chars target)
+                    max_tokens=60  # Increased from 35 — ensures questions are never cut off mid-sentence
                 ),
-                timeout=4.8  # Increased from 3.5s - allows more natural LLM responses
+                timeout=4.8
             )
             
             # 🚨 STRICT OTP/PIN/CVV SAFETY: NEVER share any sensitive numbers 🚨
