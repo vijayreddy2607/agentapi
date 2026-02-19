@@ -752,10 +752,10 @@ Analysis Rules:
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Ji sir samajh nahi aaya",
-                    "Aapka naam kya hai sir?",
-                    "Department ka naam batao sir",
-                    "Sir kahan se call kar rahe ho?"
+                    "Sorry sir, I didn't understand. Can you repeat?",
+                    "What is your full name sir?",
+                    "Can you tell me your department name?",
+                    "Where exactly are you calling from sir?"
                 ])
             else:  # techsavvy
                 return random.choice([

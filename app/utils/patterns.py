@@ -100,8 +100,9 @@ OFFICE_PATTERN = re.compile(
 )
 
 # 🆕 CASE ID PATTERN: Case/Reference/Ticket/Complaint/Incident IDs
+# Requires the captured ID to contain at least one digit OR hyphen — filters out bare words like 'NUMBER'
 CASE_ID_PATTERN = re.compile(
-    r'\b(?:case|ref(?:erence)?|ticket|complaint|incident|claim|request)\s*(?:id|no\.?|number|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{3,19})\b',
+    r'\b(?:case|ref(?:erence)?|ticket|complaint|incident|claim|request)\s*(?:id|no\.?|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{2,18}(?:\d[A-Z0-9\-]*|[A-Z0-9\-]*\d[A-Z0-9\-]*))\b',
     re.IGNORECASE
 )
 
@@ -155,17 +156,19 @@ def extract_upi_ids(text: str) -> list[str]:
     """Extract UPI IDs from text.
     UPI IDs: word@bankhandle — handle has no dots (e.g. @ybl @oksbi @fakebank)
     Emails: word@domain.tld — domain contains dots/hyphens (e.g. @fake-amazon-deals.com)
-    Key insight: if the match is followed by '-' in original text, it's part of an email domain.
-    If followed by '.' it may be sentence punctuation (e.g. 'cashback@fakeupi.').
+    Key insight: if the match is followed by '-' or '.' in original text, it's likely an email.
     """
     text_lower = text.lower()
     upi_ids = []
     for match in UPI_PATTERN.finditer(text_lower):
         m = match.group(1)
         end_pos = match.end()
+        next_char = text_lower[end_pos] if end_pos < len(text_lower) else ''
         # Skip if immediately followed by '-' (email domain like @fake-amazon-deals.com)
-        # Do NOT skip if followed by '.' (could be sentence end, not email extension)
-        if end_pos < len(text_lower) and text_lower[end_pos] == '-':
+        if next_char == '-':
+            continue
+        # Skip if immediately followed by '.' (email extension like @sbi.com, @bank.co.in)
+        if next_char == '.':
             continue
         # Also skip if the domain part contains a dot (e.g. matched @fake.com)
         at_pos = m.rfind('@')
