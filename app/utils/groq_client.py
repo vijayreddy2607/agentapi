@@ -26,15 +26,16 @@ class GroqClient:
             api_key: Groq API key (or set GROQ_API_KEY env var)
         """
         self.primary_key = api_key or os.getenv("GROQ_API_KEY")
-        self.backup_key = os.getenv("GROQ_BACKUP_KEY")
-        self.backup_key_2 = os.getenv("GROQ_BACKUP_KEY_2")
         self.current_key = self.primary_key
-        self._key_rotation_index = 0
         self._all_keys = [k for k in [
             self.primary_key,
-            self.backup_key,
-            self.backup_key_2
-        ] if k]  # Only include keys that are actually set
+            os.getenv("GROQ_BACKUP_KEY"),
+            os.getenv("GROQ_BACKUP_KEY_2"),
+            os.getenv("GROQ_BACKUP_KEY_3"),
+            os.getenv("GROQ_BACKUP_KEY_4"),
+            os.getenv("GROQ_BACKUP_KEY_5"),
+            os.getenv("GROQ_BACKUP_KEY_6"),
+        ] if k]  # Only include keys that are actually set in env
         
         if not self.primary_key:
             raise ValueError("Groq API key required. Set GROQ_API_KEY or pass api_key")
