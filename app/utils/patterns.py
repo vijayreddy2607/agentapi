@@ -103,9 +103,18 @@ OFFICE_PATTERN = re.compile(
 )
 
 # 🆕 CASE ID PATTERN: Case/Reference/Ticket/Complaint/Incident IDs
-# Requires the captured ID to contain at least one digit OR hyphen — filters out bare words like 'NUMBER'
+# Handles all real-world formats:
+#   "case number is 2023-4567"   → captured: 2023-4567
+#   "case ID is 2023-4567"       → captured: 2023-4567
+#   "case reference is 2023-4567"→ captured: 2023-4567
+#   "ticket no: TKT-9988"        → captured: TKT-9988
+#   "reference ID: REF-001234"   → captured: REF-001234
+#   "case reference number: CR24"→ captured: CR24...
 CASE_ID_PATTERN = re.compile(
-    r'\b(?:case|ref(?:erence)?|ticket|complaint|incident|claim|request)\s*(?:id|no\.?|#|:)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-]{2,18}(?:\d[A-Z0-9\-]*|[A-Z0-9\-]*\d[A-Z0-9\-]*))\b',
+    r'\b(?:case|ref(?:erence)?|ticket|complaint|incident|claim|request)'
+    r'(?:\s+(?:no\.?|number|id|reference))?'   # optional secondary label, e.g. "case reference number"
+    r'\s*(?:is\s+|:\s*|-\s*|\s)?'              # separator: "is ", ":", "-", or plain space
+    r'([A-Z0-9][A-Z0-9\-]{2,18}(?:\d[A-Z0-9\-]*|[A-Z0-9\-]*\d[A-Z0-9\-]*))',
     re.IGNORECASE
 )
 

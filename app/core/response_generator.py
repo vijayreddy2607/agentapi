@@ -100,30 +100,35 @@ ASK FOR THE CASE/REFERENCE/TICKET/POLICY NUMBER.
 → OR: "What is my policy number or order number you are calling about?"
 You MUST ask for a case ID, reference number, policy or order number."""
         },
-        # ── TURN 7: Confirm all — re-ask any missing details — CASE ID PRIORITY ─
+        # ── TURN 7: Phone/Email PRIORITY — pivot away from case ID if already collected ─
         "7": {
-            "name": "CASE ID + OVERFLOW EXTRACTION",
-            "target": "case_id + any_missing_intel",
+            "name": "PHONE / EMAIL EXTRACTION (pivot from case ID)",
+            "target": "phone_number + email_address",
             "instructions": """
-If scammer has NOT given a case ID / reference number yet, ASK FOR IT NOW.
-→ "What is the case reference ID or complaint number for this issue?"
-→ OR: "Can you give me the exact ticket or case number so I can file a report?"
-→ OR: "Before I do anything, I need the official case or reference ID — what is it?"
-If already have case ID, ask them to CONFIRM/REPEAT any missing intel:
-→ "I need to double-check — your phone number again? And the bank account?"
-CASE ID is the priority target this turn if not yet collected."""
+Check INTELLIGENCE STATUS above.
+→ If phone number is MISSING: ask for it now.
+  "What is your direct callback number? I want to call and verify."
+  OR: "Please give me your phone number — I will verify you are real."
+→ If email is MISSING: ask for it.
+  "What is your official email ID? Please send me written proof."
+→ If case ID is MISSING too: ask for case ID first, then pivot.
+  "What is the case reference number? And your direct phone number?"
+Phone number and email are the TOP priority this turn.
+Do NOT keep asking for case ID if scammer already gave one — move on."""
         },
-        # ── TURNS 8-10: Stall + re-confirm any remaining gaps ────────────────────
+        # ── TURNS 8-10: Phone/Email + Stall ────────────────────────────────────
         "8+": {
-            "name": "STALL + FINAL EXTRACTION",
-            "target": "re-confirm + case_id + stall",
+            "name": "PHONE + EMAIL + STALL",
+            "target": "phone_number + email_address + stall",
             "instructions": """
-Stall while re-asking for any MISSING intel (check INTELLIGENCE STATUS above).
-→ If no case ID: "Sorry, I lost my notes — what was the case or reference number?"
-→ If no phone: "What is your direct callback number again?"
-→ If no UPI: "What UPI ID should the verification payment go to?"
-Always refer to INTELLIGENCE STATUS above to pick the right missing item.
-Keep them engaged. Re-ask name, employee ID, case number, or phone."""
+Check INTELLIGENCE STATUS above — target the MOST MISSING item:
+→ If no phone number: "What is your direct phone number? I need to call back."
+→ If no email: "What is your official email address? Send me written proof."
+→ If no case ID: "What was the case reference number again? I lost my notes."
+→ If everything collected: stall naturally.
+  "My phone battery is dying — can I call you back in 5 minutes?"
+  "Someone's at the door — please hold on a moment."
+PRIORITY ORDER: phone > email > case ID > stall."""
         }
     }
     
