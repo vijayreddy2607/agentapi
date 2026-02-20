@@ -130,14 +130,12 @@ class BaseAgent(ABC):
                     scam_type=scam_type,
                     extracted_intel=extracted_intel
                 )
-                self._update_state(scammer_message, response)
-                
                 # Strip word-level Hinglish artifacts (stray words, not intentional Hinglish)
                 response = self.strip_hinglish(response)
                 
                 # Make response more human-like
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
-                
+
                 # 🚨 HINGLISH GATE: Discard LLM response if predominantly Hinglish
                 # is_english_response() returns False when >25% of words are Hindi
                 # This prevents "Arre Rahul ji..." style outputs reaching GUVI's English evaluator
@@ -146,9 +144,9 @@ class BaseAgent(ABC):
                     response = self._get_stateful_fallback(scammer_message, turn_count)
                     response = self.strip_hinglish(response)
                     response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
-                    self._update_state(scammer_message, response)
-                    return response
 
+                # Update state ONCE with the final (possibly replaced) response
+                self._update_state(scammer_message, response)
                 logger.info(f"✅ {self.persona_name} Turn {turn_count} Advanced LLM SUCCESS: {response[:50]}...")
                 return response
                 

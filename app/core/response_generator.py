@@ -256,8 +256,10 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
                 ("caseIds",        "case/reference ID"),
             ]
             for field_key, label in fields:
-                if extracted_intel.get(field_key):
-                    already.append(f"✅ {label}: {list(extracted_intel[field_key])[:1][0]}")  # show first value
+                values = extracted_intel.get(field_key)
+                if values:
+                    first_val = values[0] if isinstance(values, list) else next(iter(values), "")
+                    already.append(f"✅ {label}: {first_val}")
                 else:
                     missing.append(f"❌ {label}")
 
