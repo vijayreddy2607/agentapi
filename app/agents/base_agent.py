@@ -383,23 +383,25 @@ class BaseAgent(ABC):
                 "I cannot afford any loss! Before I do anything, please give me the case number!",
                 "Is there a reference or ticket number? I need to write it down before I proceed."
             ],
-            # Turn 7 — Confirm case ID (scammer may have been vague)
+            # Turn 7 — Policy number (investment/insurance scam)
             [
-                "My hands are shaking! What was the exact case ID or complaint number again?",
-                "I need to note everything. Please repeat the case reference ID or ticket number?",
-                "Please give me the case reference number one more time — I want to write it down!"
+                "Do you have a policy number or insurance reference I can verify? Please tell me!",
+                "What is the policy number for this account? I want to cross-check before doing anything!",
+                "Please share the policy number or plan reference number — I need to verify!"
             ],
-            # Turn 8 — UPI if not yet collected
+            # Turn 8 — Order number (delivery/refund scam)
             [
-                "Oh I forgot — what was the UPI ID again? Please repeat for my records!",
-                "I wrote your case ID. Now please tell me your UPI handle one more time?",
-                "Sorry, I missed the UPI ID — what was it? Please share it again!"
+                "What is the order number or transaction ID for this issue? I need it for my records!",
+                "Please give me the order ID or purchase reference — I want to verify independently!",
+                "Is there an order number or tracking ID? I cannot proceed without written proof!"
             ],
-            # Turn 9+ — Graceful close when all intel is collected
+            # Turn 9+ — Varied graceful close (different messages to avoid repetition)
             [
                 "I have everything noted! Let me verify this with my husband and call you back.",
                 "Thank you, I have written everything down. Please give me some time to confirm.",
-                "Oh, too much information! I need to sit down and verify all this. I will call you back."
+                "Oh, too much information! I need to sit down and verify all this. I will call you back.",
+                "Let me check with my bank directly. I will call their official number and get back to you.",
+                "I need to discuss this with my son first. He handles all my banking. Give me 10 minutes."
             ],
         ]
         

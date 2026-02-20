@@ -164,7 +164,7 @@ async def process_message(
             intel = session.intelligence
             _scammer_turns_so_far = len([m for m in session.conversation_history if m.sender == "scammer"])
             _all_key_fields_collected = (
-                _scammer_turns_so_far >= 7 and  # Must be turn 7+ so policy/order had a chance to be asked
+                _scammer_turns_so_far >= 8 and  # Must be turn 8+ (T0-T7 covers all 8 field types incl. policy)
                 bool(intel.phoneNumbers) and
                 bool(intel.upiIds) and
                 bool(intel.bankAccounts) and
