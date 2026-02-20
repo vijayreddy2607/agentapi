@@ -168,7 +168,9 @@ def extract_upi_ids(text: str) -> list[str]:
     """Extract UPI IDs from text.
     UPI IDs: word@bankhandle — handle has no dots (e.g. @ybl @oksbi @fakebank)
     Emails: word@domain.tld — domain contains dots/hyphens (e.g. @fake-amazon-deals.com)
-    Key insight: if the match is followed by '-' or '.' in original text, it's likely an email.
+    Key insight: if the match is followed by a domain extension (.com, .in) in the
+    original text, it's likely an email. A trailing sentence period ('fakebank.') is NOT
+    a domain extension and should NOT cause the UPI to be skipped.
     """
     text_lower = text.lower()
     upi_ids = []
@@ -179,15 +181,20 @@ def extract_upi_ids(text: str) -> list[str]:
         # Skip if immediately followed by '-' (email domain like @fake-amazon-deals.com)
         if next_char == '-':
             continue
-        # Skip if immediately followed by '.' (email extension like @sbi.com, @bank.co.in)
+        # Skip if immediately followed by '.' AND then more alpha chars (email extension like .com/.in)
+        # But do NOT skip if '.' is just sentence-ending punctuation (e.g. 'fakebank. Please...')
         if next_char == '.':
-            continue
+            char_after_dot = text_lower[end_pos + 1] if end_pos + 1 < len(text_lower) else ''
+            if char_after_dot.isalpha():  # Real domain extension like .com, .in, .org
+                continue
+            # Otherwise it's sentence punctuation — keep the UPI ID
         # Also skip if the domain part contains a dot (e.g. matched @fake.com)
         at_pos = m.rfind('@')
         domain_part = m[at_pos+1:] if at_pos >= 0 else ''
         if '.' not in domain_part:
             upi_ids.append(m)
     return list(set(upi_ids))
+
 
 
 def extract_bank_accounts(text: str) -> list[str]:
