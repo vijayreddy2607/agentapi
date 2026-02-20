@@ -21,8 +21,12 @@ class Settings(BaseSettings):
     
     # Groq Configuration (FAST & FREE!)
     groq_api_key: str | None = None
-    groq_backup_key: str | None = None  # Backup key for rate limit failover
+    groq_backup_key: str | None = None   # Backup key for rate limit failover
     groq_backup_key_2: str | None = None  # Second backup key
+    groq_backup_key_3: str | None = None  # Third backup key
+    groq_backup_key_4: str | None = None  # Fourth backup key
+    groq_backup_key_5: str | None = None  # Fifth backup key
+    groq_backup_key_6: str | None = None  # Sixth backup key
     groq_model: str = "llama-3.3-70b-versatile"
     groq_base_url: str = "https://api.groq.com/openai/v1"
     
@@ -39,9 +43,9 @@ class Settings(BaseSettings):
     guvi_callback_url: str = "https://hackathon.guvi.in/api/updateHoneyPotFinalResult"
     
     # Session Configuration
-    session_timeout_seconds: int = 300
-    max_conversation_turns: int = 30
-    min_intelligence_items: int = 1  # Lowered from 2 to trigger callback faster
+    session_timeout_seconds: int = 600  # 10 minutes — enough for a full 10-turn session
+    max_conversation_turns: int = 20    # Enough turns to score max engagement
+    min_intelligence_items: int = 0     # Turn count gates the callback now (not intel count)
     
     # Application Settings
     log_level: str = "INFO"

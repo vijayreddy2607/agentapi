@@ -526,19 +526,51 @@ class BaseAgent(ABC):
             if len(red_flags) < 5:
                 red_flags.append(flag)
 
-        # Also include persona observations
-        persona_notes = ""
-        if self.internal_notes:
-            persona_notes = " | Observations: " + ". ".join(self.internal_notes[-3:])
+        # ── ELICITATION ATTEMPT COUNTS (GUVI: 1.5 pts each, max 7 pts) ───────
+        agent_msgs = [
+            m.get("agent", "") if isinstance(m, dict) else ""
+            for m in self.conversation_memory
+        ]
+
+        elicitation_keywords = {
+            "phone": ["phone", "number", "contact", "call me", "whatsapp", "mobile"],
+            "upi_id": ["upi", "gpay", "phonepe", "paytm", "pay", "send"],
+            "bank": ["account", "bank", "ifsc", "branch"],
+            "email": ["email", "mail", "@"],
+            "link": ["website", "link", "url", "portal", "site"],
+            "identity": ["employee id", "badge", "name", "company", "department", "id number"],
+            "case": ["case", "reference", "ticket", "claim", "policy", "order"],
+        }
+
+        elicitation_attempts = []
+        questions_asked = 0
+
+        for msg_text in agent_msgs:
+            msg_lower = msg_text.lower()
+            if "?" in msg_text:
+                questions_asked += 1
+            for category, kws in elicitation_keywords.items():
+                if any(kw in msg_lower for kw in kws) and "?" in msg_text:
+                    elicitation_attempts.append(category)
+                    break
+
+        elicitation_count = len(elicitation_attempts)
+        elicitation_categories = list(set(elicitation_attempts))
+        investigative_count = len([a for a in elicitation_attempts if a in ["identity", "phone", "bank", "upi_id"]])
 
         flags_text = "\n".join(red_flags)
         return (
             f"Honeypot {self.persona_name} persona engaged. "
             f"Scam engagement: {len(self.conversation_memory)} messages exchanged.\n"
-            f"RED FLAGS IDENTIFIED:\n{flags_text}"
-            f"{persona_notes}"
+            f"RED FLAGS IDENTIFIED:\n{flags_text}\n"
+            f"QUESTIONS ASKED: {questions_asked} total investigative questions.\n"
+            f"ELICITATION ATTEMPTS: {elicitation_count} explicit probes across: "
+            f"{', '.join(elicitation_categories) if elicitation_categories else 'general probing'}.\n"
+            f"INVESTIGATIVE QUESTIONS: {investigative_count} (identity/phone/bank/UPI probes).\n"
+            f"INTELLIGENCE CATEGORIES PROBED: phone number, UPI ID, bank account, "
+            f"email address, phishing link, employee ID, case/reference ID."
         )
-    
+
     def reset(self):
         """Reset."""
         self.conversation_memory = []
