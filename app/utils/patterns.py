@@ -10,16 +10,13 @@ UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{11,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})\b')
 
 # Phone Number Pattern: Indian phone numbers (ALL formats)
-# Matches:
-#   +91-9876543210     +91 9876543210    +91.9876543210
-#   (+91) 9876543210   91-9876543210     91 9876543210
-#   09876543210        9876543210        98765-43210
-#   98765 43210        9876 543210       9876.543210   +91-98765-43210
+# Uses negative lookbehind/lookahead on the solid 10-digit branch to avoid
+# matching inside longer digit strings (e.g. bank account 1234567890123456).
 PHONE_PATTERN = re.compile(
-    r'(?:\(?\+?91\)?[\s.\-]?|(?<!\d)0)?'   # optional: +91 prefix or leading 0
+    r'(?:\(?\+?91\)?[\s.\-]?|(?<!\d)0)?'
     r'('
-    r'[6-9]\d{4}[\s.\-]\d{5}'              # 5+sep+5: 98765-43210, 98765 43210, 9876.543210
-    r'|[6-9]\d{9}'                          # solid 10-digit: 9876543210
+    r'[6-9]\d{4}[\s.\-]\d{5}'          # 5+sep+5: separator naturally breaks bank accounts
+    r'|(?<!\d)[6-9]\d{9}(?!\d)'         # solid 10-digit: MUST NOT be inside a longer number
     r')',
     re.IGNORECASE
 )
@@ -416,9 +413,13 @@ def extract_case_ids(text: str) -> list[str]:
 
 
 def extract_policy_numbers(text: str) -> list[str]:
-    """Extract insurance/policy numbers from scammer messages."""
+    """Extract insurance/policy numbers from scammer messages.
+    Requires captured value to contain at least one digit to avoid
+    false positives like extracting the word 'number' from 'policy number is...'.
+    """
     matches = POLICY_NUMBER_PATTERN.findall(text)
-    return list(set(matches))
+    # Must contain at least one digit — pure alpha matches like 'number' are false positives
+    return list(set(m for m in matches if any(c.isdigit() for c in m)))
 
 
 def extract_order_numbers(text: str) -> list[str]:
