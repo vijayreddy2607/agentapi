@@ -323,63 +323,67 @@ class BaseAgent(ABC):
         return random.choice(options)
     
     def _get_worried_stateful_fallback(self, turn_count: int) -> str:
-        """Worried progression."""
+        """Worried progression — optimized Intel extraction order:
+        T0: org/identity  T1: phone+ID  T2: UPI ID  T3: email
+        T4: link/URL      T5: bank account  T6: case ID  T7: case confirm
+        T8: UPI if missed  T9+: bank if missed
+        """
         responses = [
-            # Turn 0
+            # Turn 0 — Initial panic, ask which organization
             [
-                "Oh my God! What happened? Which organization are you from? Please tell me!",
-                "What? Is this serious? Who are you? Which department are you calling from?",
-                "Oh no! My heart is pounding! Who is calling? Please tell me now!"
+                "Oh my God! What happened? Which bank or company are you calling from?",
+                "What? Is this serious? Who are you? Please give me your official name and number!",
+                "Oh no! Please tell me — which organization is this and what is happening?"
             ],
-            # Turn 1
+            # Turn 1 — Phone number + Employee ID
             [
-                "Wait! Please give me your badge number or employee ID! I need to verify you are real!",
-                "I need proof! What is your ID number? Please do not play games with me!",
-                "Are you really from the bank? Please give me your employee ID immediately!"
+                "Wait! Please give me your direct phone number and employee ID to verify you are real!",
+                "I need proof! What is your employee ID and official contact number?",
+                "Are you really from the bank? Give me your ID number and a callback number please!"
             ],
-            # Turn 2
+            # Turn 2 — UPI ID (critical scoring field!)
             [
-                "Which department are you from? What is your supervisor's name? I need all details!",
-                "Who is in charge there? Please give me your manager's name!",
-                "I need to speak to someone senior! What is your department name?"
+                "Okay, but which UPI ID should I use to pay? Please give me the UPI handle for verification!",
+                "I am so scared! Please share your UPI ID so I can confirm the payment details!",
+                "Before anything, what is the UPI ID I should use? Please tell me now!"
             ],
-            # Turn 3
+            # Turn 3 — Email address
             [
-                "Can you send me an official email or SMS? I am too scared to do anything without written proof!",
-                "I need it in writing! Please email me now! I do not trust voice calls!",
-                "Please send me an official notice! I will not do anything until I see it in writing!"
+                "Can you send me an official email? What is your email ID? I must have written proof!",
+                "I need it in writing! Please email me now — what is your official email address?",
+                "Please give me your official email ID! I will not do anything without written proof!"
             ],
-            # Turn 4
+            # Turn 4 — Website / phishing link
             [
                 "I need written proof! Please send me the official website link so I can verify!",
-                "Oh no, this is so scary! What is the official portal URL I should check?",
+                "Oh no, this is so scary! What is the official portal URL I should open?",
                 "Please give me your official website link! I need to verify this is real!"
             ],
-            # Turn 5
+            # Turn 5 — Bank account number
             [
-                "Okay, but please also give me your official email address! I need to contact you!",
-                "So scared! What is your official email ID? I need written confirmation!",
-                "Please send me your email address first! I will only proceed with written proof!"
+                "Okay, but what is your bank account number and IFSC code? I need to verify the source!",
+                "So scared! Before I do anything, give me your account number for verification please!",
+                "Please share your bank account number — I need to confirm this is official!"
             ],
-            # Turn 6
+            # Turn 6 — Case ID / reference number
             [
                 "What if this is fraud? What is the official case reference ID for this issue?",
                 "I cannot afford any loss! Before I do anything, please give me the case number!",
                 "Is there a reference or ticket number? I need to write it down before I proceed."
             ],
-            # Turn 7
+            # Turn 7 — Confirm case ID (scammer may have been vague)
             [
-                "My hands are shaking! What is the official case ID or complaint number? I am writing it down!",
-                "I need to note everything. What is the case reference ID or ticket number for this?",
-                "Please stop pressuring me! Give me the case or reference number first!"
+                "My hands are shaking! What was the exact case ID or complaint number again?",
+                "I need to note everything. Please repeat the case reference ID or ticket number?",
+                "Please give me the case reference number one more time — I want to write it down!"
             ],
-            # Turn 8
+            # Turn 8 — UPI if not yet collected
             [
-                "Please, I need the case ID number! I cannot do anything without the reference number!",
-                "I wrote your phone and email. Now what is the official case or complaint ID?",
-                "I need to file a written complaint. What is the exact case reference number?"
+                "Oh I forgot — what was the UPI ID again? Please repeat for my records!",
+                "I wrote your case ID. Now please tell me your UPI handle one more time?",
+                "Sorry, I missed the UPI ID — what was it? Please share it again!"
             ],
-            # Turn 9+
+            # Turn 9+ — Bank account if not yet collected / stall
             [
                 "One more thing please — what is your bank account number and IFSC code?",
                 "I am noting everything down. What is your account number for verification?",
