@@ -215,11 +215,13 @@ async def process_message(
         # Count valuable intelligence (phones, UPI IDs, bank accounts, emails, links, etc.)
         current_intel_count = session.intelligence.count_valuable_items()
         
-        # TURN COUNT GATE: Only send finalOutput callback after ≥8 turns.
-        # This ensures GUVI scores the full conversation (Turn Count = 8 pts requires ≥8 turns).
-        # The GUVI evaluator uses totalMessagesExchanged from the FINAL callback to score.
-        # Sending an early callback (turn 2) would score 0 pts for turn count.
-        MINIMUM_TURNS_FOR_CALLBACK = 8  # needs ≥8 scammer messages for max turn points
+        # TURN COUNT GATE: GUVI sends only 10 turns maximum.
+        # We start sending finalOutput from turn 5 onwards so GUVI always receives it.
+        # - Sending too early (turn 1-2) would give GUVI low totalMessagesExchanged.
+        # - Sending from turn 5+ is safe: the conversation has had enough depth.
+        # - Multiple callbacks are fine — GUVI's endpoint name "updateHoneyPotFinalResult"
+        #   accepts updates, so the LAST callback wins with the most accumulated intel.
+        MINIMUM_TURNS_FOR_CALLBACK = 5  # Start sending from turn 5 (safe mid-point)
         scammer_turn_count = len([m for m in session.conversation_history if m.sender == "scammer"])
         has_enough_turns = scammer_turn_count >= MINIMUM_TURNS_FOR_CALLBACK
         
@@ -229,9 +231,11 @@ async def process_message(
         logger.info(f"📊 Turns: scammer_turns={scammer_turn_count}, min_required={MINIMUM_TURNS_FOR_CALLBACK}, has_enough={has_enough_turns}")
         logger.info(f"📊 Should complete={should_complete}")
         
-        # Stage 5: Send GUVI callback ONLY when we have enough turns OR session completes.
-        # This prevents early low-turn callbacks that hurt the GUVI score.
-        should_send_update = (has_enough_turns and current_intel_count > 0) or should_complete
+        # Send GUVI callback when:
+        #   (a) We've had 5+ turns (enough depth for good scoring), OR
+        #   (b) Session is complete (max turns or timeout)
+        # This guarantees GUVI always gets a callback even if it stops at turn 5-6.
+        should_send_update = has_enough_turns or should_complete
         logger.info(f"📤 GUVI Callback Decision: should_send_update={should_send_update} (scam_detected={session.scam_detected})")
         
         if should_send_update and session.scam_detected:

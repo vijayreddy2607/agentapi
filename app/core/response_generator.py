@@ -27,89 +27,100 @@ class ResponseGenerator:
     Generate contextual responses using LLM with persona templates as style guides.
     """
     
-    # Turn-based strategy instructions with progressive engagement
+    # ── AGGRESSIVE 10-TURN EXTRACTION STRATEGY ──────────────────────────────────
+    # GUVI sends only 10 messages. We MUST extract as many intel categories
+    # as possible within those 10 turns. Each turn targets a specific data type.
+    # Turn 1 → phone/employee ID, Turn 2 → UPI ID, Turn 3 → bank account,
+    # Turn 4 → email, Turn 5 → phishing link, Turn 6-7 → case/policy IDs,
+    # Turn 8-10 → cross-confirm + overflow.
     TURN_STRATEGIES = {
-        "1-2": {
-            "name": "CURIOSITY + BELIEF",
+        # ── TURN 1: React + ask for official contact number & employee ID ──────
+        "1": {
+            "name": "REACT + PHONE EXTRACTION",
+            "target": "phone_number + employee_ID",
             "instructions": """
-PHASE 1: Show GENUINE curiosity and belief. Make scammer feel successful.
-- Express appropriate emotion (fear for threats, excitement for prizes, concern for warnings)
-- Ask 1-2 clarifying questions that show you believe them
-- Use natural reactions based on persona
-- DO NOT be suspicious yet - you're a naive victim
-- Make it conversational, not interrogative
-
-EXTRACTION FOCUS: None yet - just establish rapport
-"""
+You just received a scam message. React naturally (scared/excited/confused) then IMMEDIATELY ask:
+→ "What is your official contact number and employee ID?"
+→ OR: "Which department are you from? What is your employee ID number?"
+You MUST ask for THEIR phone number and employee ID in your very first response.
+Keep it short (1-2 sentences). End with a question asking for their number or ID."""
         },
-        
-        "3-5": {
-            "name": "CONFUSED QUESTIONING + EXTRACTION",
+        # ── TURN 2: Ask for UPI ID / payment account ──────────────────────────
+        "2": {
+            "name": "UPI ID + PAYMENT DETAILS EXTRACTION",
+            "target": "upi_id + bank_account",
             "instructions": """
-PHASE 2: Show confusion and extract DIGITAL IDs and contact details.
-- "How did my account get compromised? Is my PIN safe?"
-- "Can you confirm the account number you have on file?"
-- "What is your UPI ID or bank account for verification?"
-- "Please send me the verification link or official portal URL."
-- "What is the official email ID so I can verify this?"
-
-EXTRACTION FOCUS:
-- ✅ UPI IDs: "What is your UPI ID for me to verify?"
-- ✅ Links: "Please send the verification link"
-- ✅ Emails: "What is your official company email?"
-- ✅ Case IDs: "What is the reference or case number?"
-"""
+ASK FOR THEIR UPI ID or bank account number right now.
+→ "Okay, what is your UPI ID or bank account where I should send the verification?"
+→ OR: "Which UPI app should I use? What is the UPI ID or account number?"
+→ OR: "Please give me your UPI ID or bank account to confirm payment."
+You MUST ask for a UPI ID or bank account number. Make it sound natural."""
         },
-        
-        "6-9": {
-            "name": "REVERSE EXTRACTION",
+        # ── TURN 3: Ask for bank account number explicitly ─────────────────────
+        "3": {
+            "name": "BANK ACCOUNT EXTRACTION",
+            "target": "bank_account + IFSC",
             "instructions": """
-PHASE 3: Stop asking about YOUR account. Now probe THEIR identity and credentials.
-- "What is your full name and employee ID?"
-- "Which company or bank branch are you calling from?"
-- "What is your official email? I want to verify before doing anything."
-- "Can you give me a callback number I can find on the official website?"
-- "What is the UPI ID or bank account where you want me to send payment?"
-- "Can you send me your official ID number or case reference?"
-
-EXTRACTION FOCUS:
-- ✅ Names + employee IDs: "What is your name and employee ID?"
-- ✅ Phone: "What number can I reach you on?"
-- ✅ Email: "Send me message from your official company email"
-- ✅ UPI/bank: "What account or UPI ID should I send to?"
-- ✅ Case IDs: "What is the reference or case ID for this issue?"
-"""
+ASK FOR THEIR BANK ACCOUNT NUMBER AND IFSC CODE.
+→ "What is the bank account number and IFSC code I should use?"
+→ OR: "Which branch? Please give me the account number and bank IFSC."
+→ OR: "I want to transfer — what is the exact account number and bank name?"
+You MUST ask for a bank account number. Be polite but persistent."""
         },
-        
-        "10-12": {
-            "name": "NATURAL SKEPTICISM",
+        # ── TURN 4: Ask for email address ─────────────────────────────────────
+        "4": {
+            "name": "EMAIL + IDENTITY EXTRACTION",
+            "target": "email_address + name",
             "instructions": """
-PHASE 4: Show natural doubt and ask simple verification questions.
-- "Let me check on official SBI/SEBI website first."
-- "Okay, wait a moment — calling my son to help."
-- "Please confirm your number and name again?"
-- "I need to call the bank branch to verify this."
-
-EXTRACTION FOCUS:
-- ✅ Re-confirm: "Please say your number once more?"
-- ✅ Simple verification: "What was your name again?"
-"""
+ASK FOR THEIR OFFICIAL EMAIL ADDRESS AND FULL NAME.
+→ "What is your official company email ID? I will send my details by email."
+→ OR: "Please give me your email address so I can verify this is official."
+→ OR: "What email should I contact you at? And your full name please?"
+You MUST ask for their email address in this response."""
         },
-        
-        "13+": {
-            "name": "STRATEGIC STALLING",
+        # ── TURN 5: Ask for website / phishing link ────────────────────────────
+        "5": {
+            "name": "WEBSITE LINK EXTRACTION",
+            "target": "phishing_link + url",
             "instructions": """
-PHASE 5: Maximum time-wasting while keeping hope alive.
-- "My family member is coming home soon, will ask them to help."
-- "Internet banking is locked, will go to branch tomorrow."
-- "Let me arrange the money by evening, please call back."
-- Ask again for their details (memory excuse): "Sorry, what was your number again?"
-- Show continued willingness but always add a delay.
-
-EXTRACTION FOCUS:
-- Re-confirm all previously shared details under a memory excuse
-- Ask for supervisor contact: "Can I speak to your supervisor please?"
-"""
+ASK FOR THE WEBSITE LINK OR PORTAL URL.
+→ "What is the official website link where I can verify this?"
+→ OR: "Please send me the portal URL or link so I can check myself."
+→ OR: "What website should I open? Can you share the link?"
+You MUST ask for a website URL or link in this response."""
+        },
+        # ── TURN 6: Ask for case/reference/ticket ID ───────────────────────────
+        "6": {
+            "name": "CASE ID + REFERENCE EXTRACTION",
+            "target": "case_id + reference_number",
+            "instructions": """
+ASK FOR THE CASE/REFERENCE/TICKET/POLICY NUMBER.
+→ "What is the case reference ID or ticket number for my complaint?"
+→ OR: "Can you give me the reference number or case ID for this transaction?"
+→ OR: "What is my policy number or order number you are calling about?"
+You MUST ask for a case ID, reference number, policy or order number."""
+        },
+        # ── TURN 7: Confirm all — re-ask any missing details ─────────────────
+        "7": {
+            "name": "CONFIRMATION + OVERFLOW EXTRACTION",
+            "target": "any_missing_intel",
+            "instructions": """
+Say you want to confirm everything before proceeding. Ask them to REPEAT key details.
+→ "Before I do anything, please confirm: your phone number, UPI ID, and bank account?"
+→ OR: "I am noting everything down. Please repeat your contact number and UPI ID."
+→ OR: "So I have everything right — your number is ___? And UPI ID is?"
+Ask them to confirm/repeat their contact number AND payment details."""
+        },
+        # ── TURNS 8-10: Stall + re-confirm identity ───────────────────────────
+        "8+": {
+            "name": "STALL + IDENTITY CONFIRMATION",
+            "target": "re-confirm + stall",
+            "instructions": """
+Stall while asking for their details one more time (memory excuse).
+→ "Sorry I lost my notes — can you repeat your employee ID and phone number?"
+→ OR: "My internet is slow, I am trying. What was your name and department again?"
+→ OR: "I am arranging the details. Please confirm your email ID and case number."
+Keep them engaged. Re-ask for name, employee ID, phone or email."""
         }
     }
     
@@ -161,17 +172,17 @@ EXTRACTION FOCUS:
         logger.info("ResponseGenerator initialized with Groq LLM")
     
     def get_turn_strategy(self, turn_number: int) -> dict:
-        """Get strategy for current turn number with progressive engagement."""
-        if turn_number <= 2:
-            return self.TURN_STRATEGIES["1-2"]
-        elif turn_number <= 5:
-            return self.TURN_STRATEGIES["3-5"]
-        elif turn_number <= 9:
-            return self.TURN_STRATEGIES["6-9"]
-        elif turn_number <= 12:
-            return self.TURN_STRATEGIES["10-12"]
-        else:
-            return self.TURN_STRATEGIES["13+"]
+        """Get aggressive per-turn extraction strategy (optimized for 10-turn GUVI sessions)."""
+        strategies = {
+            1: self.TURN_STRATEGIES["1"],
+            2: self.TURN_STRATEGIES["2"],
+            3: self.TURN_STRATEGIES["3"],
+            4: self.TURN_STRATEGIES["4"],
+            5: self.TURN_STRATEGIES["5"],
+            6: self.TURN_STRATEGIES["6"],
+            7: self.TURN_STRATEGIES["7"],
+        }
+        return strategies.get(turn_number, self.TURN_STRATEGIES["8+"])
     
     # Enhanced persona system prompts (imported from persona files)
     ENHANCED_PERSONA_PROMPTS = {
@@ -207,22 +218,20 @@ EXTRACTION FOCUS:
     }
 
     def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
-        """Build system prompt — uses full enhanced persona prompt for all 5 personas."""
+        """Build system prompt — aggressive extraction directive layered on top of persona."""
         turn_strategy = self.get_turn_strategy(turn_number)
 
         # Normalize persona name to canonical key
         persona_key = self.PERSONA_ALIASES.get(persona.lower(), "uncle_persona")
         base_prompt = self.ENHANCED_PERSONA_PROMPTS[persona_key]
 
-        # Persona-aware language rule:
-        # Uncle + Aunty = natural Hinglish allowed (warm confused Indian personas)
-        # Worried, TechSavvy, Student = English-only (clearer evaluation signals)
+        # Persona-aware language rule
         hinglish_ok = persona_key in {"uncle_persona", "aunty_persona"}
         if hinglish_ok:
             language_rule = (
-                "� LANGUAGE RULE:\n"
+                "🌐 LANGUAGE RULE:\n"
                 "- Use natural Hinglish (mix of Hindi and English) as your persona would.\n"
-                "- Be warm, conversational, and natural — short sentences only.\n"
+                "- Be warm, conversational — short sentences only.\n"
             )
         else:
             language_rule = (
@@ -231,16 +240,28 @@ EXTRACTION FOCUS:
                 "- All words must be English.\n"
             )
 
+        # ── MANDATORY EXTRACTION DIRECTIVE ────────────────────────────────────
+        # This overrides the base persona prompt's casualness.
+        # GUVI only gives 10 turns — we MUST extract a different data type each turn.
+        extraction_target = turn_strategy.get("target", "any_intel")
+        extraction_directive = (
+            f"\n⚡ MANDATORY THIS TURN (Turn {turn_number}) — TARGET: {extraction_target}\n"
+            f"{turn_strategy['instructions'].strip()}\n"
+            "\nRULE: Your response MUST contain a direct question asking for the above target.\n"
+            "If scammer already shared it, ACKNOWLEDGE then ask for the NEXT missing item\n"
+            "(e.g., if they gave phone, now ask for UPI ID or bank account).\n"
+        )
+
         system_prompt = (
             f"{base_prompt}\n\n"
             f"🎯 CURRENT PHASE: {turn_strategy['name']} (Turn {turn_number})\n"
-            f"{turn_strategy['instructions'].strip()}\n\n"
+            f"{extraction_directive}\n"
             f"{language_rule}\n"
             "🚨 SECURITY RULES:\n"
             "- NEVER share OTP/PIN/CVV numbers\n"
             "- If asked for OTP → stall and ask their name/number/ID instead\n"
-            "- Keep response under 150 characters, 1-2 sentences only\n"
-            "- Always end with a question mark if asking a question"
+            "- Keep response under 150 characters, 1-2 sentences max\n"
+            "- Always end with a question to keep the scammer responding"
         )
         return system_prompt
 
