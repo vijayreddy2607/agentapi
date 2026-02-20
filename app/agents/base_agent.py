@@ -381,9 +381,9 @@ class BaseAgent(ABC):
             ],
             # Turn 9+
             [
-                "I do not know what to do! What was your case reference ID again? Please repeat.",
-                "Why is this happening? Please give me the official complaint number so I can verify.",
-                "Please give me a moment. What is the official case reference number for my complaint?"
+                "One more thing please — what is your bank account number and IFSC code?",
+                "I am noting everything down. What is your account number for verification?",
+                "Please give me your bank account number — I need to verify the source!"
             ],
         ]
         

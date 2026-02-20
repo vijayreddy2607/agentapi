@@ -336,19 +336,25 @@ def extract_emails(text: str) -> list[str]:
             emails.append(m.lower())
 
     # 2. Context-aware: UPI-style handles used as email (no TLD but "email" word nearby)
-    # e.g. "emailed you from scammer.fraud@fakebank" or "email ID scammer@fakebank"
+    # e.g. "emailed you from scammer.fraud@fakebank" (no .com) → emailAddresses
+    # SKIP if match is followed by .letters in the original text (already captured above as real email)
     email_context_pattern = re.compile(
         r'(?:email(?:ed)?|e-mail)\s+(?:\w+\s+){0,4}?([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)',
         re.IGNORECASE
     )
     for match in email_context_pattern.finditer(text):
         candidate = match.group(1).lower()
+        end_pos = match.end()
+        # If immediately followed by .letters, it's a real TLD email — standard pattern caught it
+        next_char = text[end_pos] if end_pos < len(text) else ''
+        char_after_dot = text[end_pos + 1] if end_pos + 1 < len(text) else ''
+        if next_char == '.' and char_after_dot.isalpha():
+            continue  # e.g. support@securebank.in — already in emails list
         at_pos = candidate.rfind('@')
         domain_part = candidate[at_pos+1:] if at_pos >= 0 else ''
-        # Add if no TLD (UPI-style, would be missed by standard pattern)
+        # Add only if no TLD (UPI-style handle used as email)
         if '.' not in domain_part and candidate not in emails:
             emails.append(candidate)
-
 
     return list(set(emails))
 
