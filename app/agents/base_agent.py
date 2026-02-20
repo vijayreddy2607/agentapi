@@ -277,8 +277,8 @@ class BaseAgent(ABC):
             ],
             # Turn 1 — ID + phone
             [
-                "I see. But what is your employee ID number and direct phone number? My son always says to ask.",
-                "Okay, verify yourself first. What is your employee ID and official contact number?",
+                "What if this is fraud? Verify yourself first! Employee ID and direct phone number please!",
+                "I cannot trust this call without proof. What is your employee ID and official contact number?",
                 "Wait. Before I do anything, please give me your official ID and callback number."
             ],
             # Turn 2 — UPI ID
@@ -295,8 +295,8 @@ class BaseAgent(ABC):
             ],
             # Turn 4 — Website / link
             [
-                "Please give me the official website link. I want to open it and verify myself.",
-                "What is the official portal URL? I will check on my own computer.",
+                "What if this is a fraud call? Please give me the official website link so I can verify.",
+                "I cannot trust a phone call without written proof. Send me the official website address.",
                 "Send me the website address — I do not trust phone calls without written proof."
             ],
             # Turn 5 — Bank account
@@ -307,9 +307,9 @@ class BaseAgent(ABC):
             ],
             # Turn 6 — Case ID
             [
-                "What is the case number or reference ID for this complaint? I want to write it down.",
-                "Please give me the official reference number. My son said always note the case number.",
-                "Is there a ticket or case ID? Please tell me — I am writing everything down."
+                "What if this is fraud? Please give me the official case reference ID so I can verify.",
+                "I need to write down the case number before I do anything — what is the reference ID?",
+                "Is there a ticket or case ID? I cannot proceed without a written reference number."
             ],
             # Turn 7 — Policy number (investment/insurance scam)
             [
@@ -349,8 +349,8 @@ class BaseAgent(ABC):
             ],
             # Turn 1 — Phone number + Employee ID
             [
-                "Wait! Please give me your direct phone number and employee ID to verify you are real!",
-                "I need proof! What is your employee ID and official contact number?",
+                "Wait! What if this is fraud? Give me your direct phone number and employee ID to verify!",
+                "I cannot trust unsolicited calls! What is your employee ID and official contact number?",
                 "Are you really from the bank? Give me your ID number and a callback number please!"
             ],
             # Turn 2 — UPI ID (critical scoring field!)
@@ -494,8 +494,8 @@ class BaseAgent(ABC):
             ],
             # Turn 1 — Phone + ID
             [
-                "Okay beta, but please give me your phone number and employee ID first for verification.",
-                "Give me your direct number and ID number please. My daughter says always check first!",
+                "What if this is a scam beta? Please give me your phone number and employee ID first!",
+                "I cannot trust phone calls without proof! Give me your direct number and employee ID.",
                 "Please share your official contact number and employee ID so I can verify you are real."
             ],
             # Turn 2 — UPI
@@ -512,8 +512,8 @@ class BaseAgent(ABC):
             ],
             # Turn 4 — Website link
             [
-                "Can you share the official website link beta? I want to verify before doing anything.",
-                "What is your company website URL? I will open it myself to confirm.",
+                "What if this is a fraud beta? Please share the official website link so I can verify.",
+                "I cannot trust a phone call without written proof! Give me your official website please.",
                 "Please send me the official portal link so I can check everything myself."
             ],
             # Turn 5 — Bank account
@@ -530,9 +530,9 @@ class BaseAgent(ABC):
             ],
             # Turn 7 — Case ID
             [
-                "What is the complaint or reference number for this case beta? I want to note it down.",
-                "Give me the case reference number please — my son will verify it for me.",
-                "Please share the ticket number or case ID. I am writing everything down carefully."
+                "What if this is a scam beta? Give me the official case or complaint reference number!",
+                "I need a written reference number before I do anything — what is the case ID?",
+                "Please share the ticket number or case ID. I cannot proceed without written proof."
             ],
             # Turn 8 — Policy number
             [
@@ -565,8 +565,8 @@ class BaseAgent(ABC):
             ],
             # Turn 1 — Phone + ID
             [
-                "Okay, give me your employee ID and direct number first — I need to verify you are real.",
-                "Before anything, what is your official contact number and employee ID?",
+                "What if this is a fraud bro? Give me your employee ID and direct number first!",
+                "I cannot trust this without proof — what is your official contact number and employee ID?",
                 "Share your ID number and callback number — my friend got scammed last week so I am careful."
             ],
             # Turn 2 — Email
@@ -583,8 +583,8 @@ class BaseAgent(ABC):
             ],
             # Turn 4 — Website link
             [
-                "Send me the official company website link — I'll verify the job posting myself.",
-                "What is the website URL? I want to Google the company and apply from the official site.",
+                "What if this is a scam bro? Send me the official website link so I can verify!",
+                "I cannot pay without checking the company first! What is the official website URL?",
                 "Give me the portal link bro — I want to verify independently before applying."
             ],
             # Turn 5 — Bank account
@@ -601,9 +601,9 @@ class BaseAgent(ABC):
             ],
             # Turn 7 — Case ID
             [
-                "What is the official case ID or complaint number I can use to track this?",
-                "Give me the reference number or ticket ID — I'll verify it on your support portal.",
-                "Please share the case reference number. I need it for my records."
+                "What if this is a fraud bro? Give me the official complaint case ID to verify!",
+                "I need a reference number before I pay anything — what is the case or ticket ID?",
+                "Please share the case reference number. I cannot trust this without written proof."
             ],
             # Turn 8 — Policy number
             [
