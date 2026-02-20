@@ -170,7 +170,8 @@ async def process_message(
                 bool(intel.bankAccounts) and
                 bool(intel.emailAddresses) and
                 bool(intel.phishingLinks) and
-                bool(intel.caseIds)
+                # Accept any ONE of: case ID (bank scam), policy number (investment scam), order number (delivery scam)
+                (bool(intel.caseIds) or bool(intel.policyNumbers) or bool(intel.orderNumbers))
             )
             if _all_key_fields_collected:
                 import random as _rnd
