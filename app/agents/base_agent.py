@@ -351,15 +351,15 @@ class BaseAgent(ABC):
             ],
             # Turn 4
             [
-                "How do I know this is real? My friend got scammed last month! Please give me evidence!",
-                "This sounds suspicious! Please prove you are real! I am very worried!",
-                "I am recording this call! Please give me evidence or I will hang up!"
+                "I need written proof! Please send me the official website link so I can verify!",
+                "Oh no, this is so scary! What is the official portal URL I should check?",
+                "Please give me your official website link! I need to verify this is real!"
             ],
             # Turn 5
             [
-                "I need to call my lawyer first! This is too stressful! Please give me some time!",
-                "I am calling the police to verify first! Please do not go anywhere!",
-                "My husband is a lawyer. I need to conference him in. Please wait!"
+                "Okay, but please also give me your official email address! I need to contact you!",
+                "So scared! What is your official email ID? I need written confirmation!",
+                "Please send me your email address first! I will only proceed with written proof!"
             ],
             # Turn 6
             [
