@@ -258,79 +258,78 @@ class BaseAgent(ABC):
         elif "TechSavvy" in self.persona_name:
             return self._get_techsavvy_stateful_fallback(turn_count)
         elif "Aunty" in self.persona_name or "Sunita" in self.persona_name:
-            # Aunty agent handles her own fallback
-            return "Hayy! This is nice beta! Tell me more..."
+            return self._get_aunty_stateful_fallback(turn_count)
         elif "Student" in self.persona_name or "Arjun" in self.persona_name:
-            # Student agent handles their own fallback
-            return "Wait bro, is this legit? Can u send details?"
+            return self._get_student_stateful_fallback(turn_count)
         return "Sorry, I don't understand. Can you explain again?"
     
     def _get_uncle_stateful_fallback(self, turn_count: int) -> str:
-        """Uncle progression: company→ID→office→supervisor→contact→stall."""
+        """Uncle progression — extraction-first order:
+        T0: org  T1: ID  T2: UPI  T3: email  T4: link
+        T5: bank account  T6: case ID  T7: policy number  T8: order number  T9+: confirm
+        """
         responses = [
-            # Turn 0 (Ask Bank)
+            # Turn 0
             [
                 "Oh my! What happened? Which bank or company are you calling from? Please tell me properly.",
                 "Please tell me slowly, what is the problem? Which bank is this?",
                 "I am not understanding. Who is calling? From where are you calling?"
             ],
-            # Turn 1 (Ask ID)
+            # Turn 1 — ID + phone
             [
-                "I see. But what is your employee ID number? My son always says to ask for ID first.",
-                "Okay, verify yourself first. What is your employee ID number?",
-                "Wait. Before I do anything, please give me your official ID number."
+                "I see. But what is your employee ID number and direct phone number? My son always says to ask.",
+                "Okay, verify yourself first. What is your employee ID and official contact number?",
+                "Wait. Before I do anything, please give me your official ID and callback number."
             ],
-            # Turn 2 (Ask Office)
+            # Turn 2 — UPI ID
             [
-                "Alright. Which office are you calling from? What is the address?",
-                "Where is your office located? I will come there personally to verify.",
-                "Please give me your office address. My nephew works in the police, he will verify."
+                "Alright. Which UPI ID should I use to make the payment? Please give me the UPI handle.",
+                "Okay but give me your UPI ID first — I need to verify the payment details.",
+                "Please share your UPI ID for verification. I want to confirm before doing anything."
             ],
-            # Turn 3 (Ask Supervisor)
+            # Turn 3 — Email
             [
-                "Okay. What is your supervisor's full name? I want to speak to a senior person.",
-                "Who is your manager? Please give me his number so I can confirm first.",
-                "Let me talk to your manager. I don't trust a phone call alone."
+                "Can you send an official email? What is your official email address please?",
+                "Please send me an email. I will check and reply. What is your email ID?",
+                "No verbal confirmation. Please give me your email address so I can verify in writing."
             ],
-            # Turn 4 (Ask Official Contact)
+            # Turn 4 — Website / link
             [
-                "Can you send an official SMS or email? I will show it to my son, he handles these things.",
-                "Please send me an email. I will check and reply to you.",
-                "No verbal confirmation. Please send a written notice to my address."
+                "Please give me the official website link. I want to open it and verify myself.",
+                "What is the official portal URL? I will check on my own computer.",
+                "Send me the website address — I do not trust phone calls without written proof."
             ],
-            # Turn 5 (Stall)
+            # Turn 5 — Bank account
             [
-                "Wait one minute, someone is at the door... Coming! ... Sorry, what were you saying?",
-                "Hold on, my other phone is ringing. One minute please.",
-                "Wait wait, something is happening in the kitchen! Just 2 minutes hold please."
+                "Okay but what is your bank account number and IFSC code? I need to verify the source.",
+                "Give me the account number where verification amount goes — I want to double check.",
+                "Please share your account number. I want to confirm this is a real bank account."
             ],
-            # Turn 6 (Stall - Battery)
+            # Turn 6 — Case ID
             [
-                "My phone battery is very low. Let me charge it first, then we continue. 5 minutes.",
-                "Phone is about to die. Can I call you back? Wait.",
-                "Battery is at 1%! I cannot find my charger! Hello? Hello?"
+                "What is the case number or reference ID for this complaint? I want to write it down.",
+                "Please give me the official reference number. My son said always note the case number.",
+                "Is there a ticket or case ID? Please tell me — I am writing everything down."
             ],
-            # Turn 7 (Stall - Internet)
+            # Turn 7 — Policy number (investment/insurance scam)
             [
-                "My internet is very slow today. The page is not loading at all.",
-                "The WiFi is not working. It keeps buffering. Can you hear me?",
-                "My computer has frozen. A Windows update is running. Please wait 10 minutes."
+                "Do you have a policy number or insurance reference? I want to cross-check it.",
+                "What is the policy number associated with my account? Please tell me.",
+                "Please share the policy number or plan number for verification."
             ],
-            # Turn 8 (Stall)
+            # Turn 8 — Order number (delivery/refund scam)
             [
-                "I need to step away for a moment. Can you call back in about an hour?",
-                "There is someone at my door. Please hold on.",
-                "I am in the middle of something. Can we continue after some time?"
+                "What is the order number or transaction ID for this refund? Please tell me.",
+                "Give me the order ID or purchase reference number — I need it for my records.",
+                "Please share the order number or delivery tracking ID for verification."
             ],
-            # Turn 9+ (Stall - Generic)
+            # Turn 9+ — stall
             [
                 "Please explain slowly. I am an older person and I need time to understand.",
-                "Please speak louder, I am having trouble hearing you.",
+                "Please speak louder, I am having trouble hearing you clearly.",
                 "I am writing it down... my pen stopped working. One second, finding a pencil."
             ],
         ]
-        
-        # Select options for current turn (cap at max length)
         idx = min(turn_count, len(responses) - 1)
         options = responses[idx]
         return random.choice(options)
@@ -409,7 +408,11 @@ class BaseAgent(ABC):
         return random.choice(options)
     
     def _get_techsavvy_stateful_fallback(self, turn_count: int) -> str:
-        """Tech-savvy progression."""
+        """TechSavvy progression — investigative + extraction:
+        T0: company/website  T1: LinkedIn/profile  T2: domain/CIN  T3: portal issue
+        T4: phone/contact    T5: policy number     T6: order number  T7: case ID
+        T8: UPI/account      T9+: report/stall
+        """
         responses = [
             # Turn 0
             [
@@ -439,31 +442,31 @@ class BaseAgent(ABC):
             [
                 "Please give me the customer care number from your website. I want to call and verify.",
                 "I will call the support number on the back of my card. What is your direct number?",
-                "I am dialing the official toll-free number right now. Please stay on the line."
+                "I am dialing the official toll-free number right now. Please give me your direct line."
             ],
-            # Turn 5
+            # Turn 5 — Policy number (investment/insurance scam)
             [
-                "I checked WHOIS and your domain was registered just 3 days ago. Can you explain that?",
-                "The domain is only 2 days old. That is a major red flag. Is this a phishing site?",
-                "Your IP address appears to be proxied. Why are you hiding your actual location?"
+                "What is the policy number or investment plan ID associated with this issue?",
+                "Please provide the policy reference number — I want to verify it on the insurer's portal.",
+                "Give me the policy number or plan ID. I cannot proceed without verifying it independently."
             ],
-            # Turn 6
+            # Turn 6 — Order number (delivery/refund scam)
             [
-                "Why are you using a UPI ID instead of a proper bank transfer? That is suspicious.",
-                "Corporate accounts do not use personal UPI handles. Please explain.",
-                "This payment link is using HTTP, not HTTPS. That is not secure."
+                "What is the order number or transaction reference for this refund or delivery issue?",
+                "Please give me the order ID — I will verify it directly on the courier's tracking portal.",
+                "I need the order number or AWB number. I cannot verify your claim without it."
             ],
-            # Turn 7
+            # Turn 7 — Case ID
             [
-                "I need 24 hours to run proper background checks. There are too many inconsistencies.",
-                "I am running a digital footprint analysis on your number right now. Please wait.",
-                "My security software blocked your link and flagged it as malware."
+                "What is the official case ID or complaint number registered in your system?",
+                "Please give me the case reference number — I want to track it on the official portal.",
+                "I need the ticket number or complaint ID for independent verification."
             ],
-            # Turn 8
+            # Turn 8 — UPI/bank account if not got
             [
-                "I am posting this conversation on a fraud reporting forum. What is your official ID?",
-                "Multiple people have already reported your number as fraudulent. Can you explain?",
-                "I am filing a complaint right now. What is your employee ID for the report?"
+                "I am posting this conversation on a fraud reporting forum. What is your official UPI ID?",
+                "Multiple people have reported your number. Please provide your bank account for evidence.",
+                "I am filing a complaint. What is your employee ID and account number for the report?"
             ],
             # Turn 9+
             [
@@ -472,11 +475,153 @@ class BaseAgent(ABC):
                 "This conversation is being recorded and logged as evidence. Please be careful."
             ],
         ]
-        
         idx = min(turn_count, len(responses) - 1)
         options = responses[idx]
         return random.choice(options)
     
+    def _get_aunty_stateful_fallback(self, turn_count: int) -> str:
+        """Aunty progression — warm but extracting:
+        T0: org  T1: phone+ID  T2: UPI  T3: email  T4: link
+        T5: bank account  T6: order number (delivery scam)  T7: case ID
+        T8: policy number  T9+: stall
+        """
+        responses = [
+            # Turn 0
+            [
+                "Hayy! What happened beta? Which company or bank is this calling?",
+                "Oh dear! Please explain slowly — who are you and where are you calling from?",
+                "Beta, I don't understand. Which bank or company is this?"
+            ],
+            # Turn 1 — Phone + ID
+            [
+                "Okay beta, but please give me your phone number and employee ID first for verification.",
+                "Give me your direct number and ID number please. My daughter says always check first!",
+                "Please share your official contact number and employee ID so I can verify you are real."
+            ],
+            # Turn 2 — UPI
+            [
+                "Achha beta, which UPI ID should I use to pay the amount? Please share your UPI handle.",
+                "For verification payment, give me your UPI ID please.",
+                "What is your UPI ID beta? I need it to confirm the payment details."
+            ],
+            # Turn 3 — Email
+            [
+                "Beta, please send me an official email first. What is your email address?",
+                "I need it in writing dear! What is your official email ID?",
+                "Please give me your email address — I only trust written communication."
+            ],
+            # Turn 4 — Website link
+            [
+                "Can you share the official website link beta? I want to verify before doing anything.",
+                "What is your company website URL? I will open it myself to confirm.",
+                "Please send me the official portal link so I can check everything myself."
+            ],
+            # Turn 5 — Bank account
+            [
+                "Okay but what is your bank account number beta? I want to verify the source of the call.",
+                "Give me the account number for the verification amount please.",
+                "Please share your bank account number — I need to confirm before doing anything."
+            ],
+            # Turn 6 — Order number (delivery/refund scam)
+            [
+                "What is the order number beta? I want to check it on the delivery app myself.",
+                "Please give me the order ID or parcel tracking number for verification.",
+                "Which order number are you talking about? Please tell me the order ID."
+            ],
+            # Turn 7 — Case ID
+            [
+                "What is the complaint or reference number for this case beta? I want to note it down.",
+                "Give me the case reference number please — my son will verify it for me.",
+                "Please share the ticket number or case ID. I am writing everything down carefully."
+            ],
+            # Turn 8 — Policy number
+            [
+                "Do you have a policy number or insurance plan number? Please give it to me.",
+                "What is the policy number associated with this issue? I want to crosscheck.",
+                "Please share the policy or plan reference number for independent verification."
+            ],
+            # Turn 9+ — stall
+            [
+                "Wait beta, my grandchildren are making noise. Give me one minute please!",
+                "I am so confused! Please call back in the evening when my son is home.",
+                "Hayy, my phone battery is low! Can I call you back on your number?"
+            ],
+        ]
+        idx = min(turn_count, len(responses) - 1)
+        options = responses[idx]
+        return random.choice(options)
+
+    def _get_student_stateful_fallback(self, turn_count: int) -> str:
+        """Student progression — skeptical but engaging:
+        T0: org  T1: phone+ID  T2: email  T3: UPI  T4: link
+        T5: bank account  T6: order number  T7: case ID  T8: policy number  T9+: stall
+        """
+        responses = [
+            # Turn 0
+            [
+                "Wait, who is this? Which company are you from? Send me proof bro.",
+                "Hold on, which organization sent you? I need to verify this is legit.",
+                "Bro, I am a student. Which company is this and why are you contacting me?"
+            ],
+            # Turn 1 — Phone + ID
+            [
+                "Okay, give me your employee ID and direct number first — I need to verify you are real.",
+                "Before anything, what is your official contact number and employee ID?",
+                "Share your ID number and callback number — my friend got scammed last week so I am careful."
+            ],
+            # Turn 2 — Email
+            [
+                "Can you email me the details? What is your official company email address?",
+                "Email me the offer first. What is your email ID? I only trust written proof.",
+                "Please send your official email — what is your email address?"
+            ],
+            # Turn 3 — UPI
+            [
+                "Okay but what is the UPI ID for the registration fee? I need to verify it is official.",
+                "Which UPI handle should I pay to? Give me the exact UPI ID please.",
+                "For the payment, what is your UPI ID? I want to confirm before transferring."
+            ],
+            # Turn 4 — Website link
+            [
+                "Send me the official company website link — I'll verify the job posting myself.",
+                "What is the website URL? I want to Google the company and apply from the official site.",
+                "Give me the portal link bro — I want to verify independently before applying."
+            ],
+            # Turn 5 — Bank account
+            [
+                "For the registration payment, what is the exact bank account and IFSC code?",
+                "Give me the account details — I want to verify the company's bank account is real.",
+                "Please share the bank account number. I'll match it with their website before paying."
+            ],
+            # Turn 6 — Order number
+            [
+                "What is the order number or transaction reference for this issue?",
+                "Give me the order ID — I want to track it on the platform myself.",
+                "Please share the order number or AWB tracking number. I'll verify it myself."
+            ],
+            # Turn 7 — Case ID
+            [
+                "What is the official case ID or complaint number I can use to track this?",
+                "Give me the reference number or ticket ID — I'll verify it on your support portal.",
+                "Please share the case reference number. I need it for my records."
+            ],
+            # Turn 8 — Policy number
+            [
+                "Is there a policy number or loan reference number associated with this?",
+                "What is the loan application number or policy reference? I want to verify it.",
+                "Please give me the policy or plan reference number for independent confirmation."
+            ],
+            # Turn 9+ — stall
+            [
+                "My class is starting soon. Can I respond to this by evening?",
+                "I need to discuss this with my parents first. Can I call you back?",
+                "I don't have data right now, the link isn't loading. I'll check later."
+            ],
+        ]
+        idx = min(turn_count, len(responses) - 1)
+        options = responses[idx]
+        return random.choice(options)
+
     def _update_state(self, scammer_message: str, agent_response: str):
         """Update state."""
         self.conversation_memory.append({"scammer": scammer_message, "agent": agent_response})
