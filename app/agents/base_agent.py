@@ -51,17 +51,30 @@ class BaseAgent(ABC):
 
     # Full Hindi/Hinglish words that indicate a sentence-level Hinglish response
     _HINDI_WORD_SET = {
+        # Postpositions / conjunctions
         'ka', 'ke', 'ki', 'ko', 'se', 'hai', 'hain', 'ho', 'tha', 'thi', 'the',
         'aur', 'ya', 'par', 'mein', 'pe', 'tak', 'bhi', 'sirf', 'toh',
         'kya', 'kaise', 'kyun', 'kab', 'kahan', 'kaun', 'kitna',
-        'nahi', 'nahi', 'mat', 'na', 'haan', 'ji', 'ek', 'do', 'teen',
+        'nahi', 'mat', 'na', 'haan', 'ji', 'ek', 'do', 'teen',
         'mera', 'meri', 'mere', 'apna', 'apni', 'apne', 'tumhara', 'aapka',
         'batao', 'bata', 'dijiye', 'karo', 'karna', 'dena', 'lena', 'lelo',
         'hum', 'tum', 'aap', 'woh', 'yeh', 'wahan', 'yahan', 'ab',
-        'abhi', 'phir', 'pehle', 'baad', 'lekin', 'agar', 'to', 'warna',
+        'abhi', 'phir', 'pehle', 'baad', 'lekin', 'agar', 'warna',
         'sahi', 'galat', 'achha', 'bura', 'zyada', 'kam', 'bahut',
-        'naam', 'number', 'samjhe', 'samajh', 'suniye', 'suno', 'dekho',
+        'naam', 'samjhe', 'samajh', 'suniye', 'suno', 'dekho',
         'kripya', 'turant', 'jaldi', 'rukiye', 'ruko', 'aaiye', 'aao',
+        # Common verbs/endings frequently used in Hinglish
+        'karunga', 'karega', 'karenge', 'karti', 'karta', 'karte',
+        'chahta', 'chahte', 'chahiye', 'milega', 'milta', 'milti',
+        'bhej', 'bhejo', 'bheja', 'bhejna', 'aayega', 'ayega',
+        'sakta', 'sakti', 'sakte', 'sakun', 'sako', 'sakein',
+        'liya', 'liye', 'lekar', 'raha', 'rahi', 'rahe',
+        'taaki', 'jisse', 'isliye', 'kyunki', 'waise', 'aise',
+        'theek', 'thik', 'bilkul', 'zaroor', 'jarur', 'pakka',
+        'dhanyavad', 'shukriya', 'namaste', 'namaskar',
+        'baba', 'beta', 'yaar', 'bhai', 'didi', 'aunty', 'uncle',
+        'arey', 'arre', 'oho', 'haye', 'accha', 'achha',
+        'kuch', 'sab', 'koi', 'har', 'puri', 'poori',
     }
 
     @classmethod
@@ -77,7 +90,7 @@ class BaseAgent(ABC):
             return True  # Too short to judge, assume okay
         hindi_count = sum(1 for w in words if w in cls._HINDI_WORD_SET)
         hindi_ratio = hindi_count / len(words)
-        return hindi_ratio < 0.25  # Flag if >25% words are Hindi
+        return hindi_ratio < 0.15  # Flag if >15% words are Hindi (was 25%, too lenient)
 
 
     def __init__(self, persona_name: str):
