@@ -158,9 +158,13 @@ async def process_message(
         
         # Stage 3: Generate Agent Response (multi-agent pipeline)
         if session.scam_detected:
-            # 🎯 SMART CLOSE: If all key intel already collected, return graceful close
+            # 🎯 SMART CLOSE: If all key intel already collected AND we've had enough turns
+            # to ask for order/policy numbers (min 7 scammer turns = T0-T6 covered),
+            # return graceful close instead of repeating questions.
             intel = session.intelligence
+            _scammer_turns_so_far = len([m for m in session.conversation_history if m.sender == "scammer"])
             _all_key_fields_collected = (
+                _scammer_turns_so_far >= 7 and  # Must be turn 7+ so policy/order had a chance to be asked
                 bool(intel.phoneNumbers) and
                 bool(intel.upiIds) and
                 bool(intel.bankAccounts) and
@@ -178,7 +182,8 @@ async def process_message(
                 ]
                 agent_response = _rnd.choice(_closing)
                 intel_log = {"status": "all_intel_collected", "closing": True}
-                logger.info(f"✅ ALL KEY INTEL COLLECTED — sending graceful close response")
+                logger.info(f"✅ ALL KEY INTEL COLLECTED (turn {_scammer_turns_so_far}) — sending graceful close response")
+
             else:
                 agent_response, intel_log = await agent_orchestrator.generate_response(
                     session=session,
