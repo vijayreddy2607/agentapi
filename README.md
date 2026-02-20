@@ -60,7 +60,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## API Endpoint
 
-### POST `/`  (or `/api/message`)
+- **URL:** `https://agent-api-dnvn.onrender.com/honeypot`
+- **Method:** POST
+- **Authentication:** `x-api-key` header
 
 **Headers:**
 ```
@@ -93,6 +95,8 @@ x-api-key: <your-api-key>
   "reply": "Oh! Which bank is calling? What is your employee ID number?"
 }
 ```
+
+> Also available at: `POST /` and `POST /api/message`
 
 ---
 
