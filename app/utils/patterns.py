@@ -319,15 +319,37 @@ def extract_landlines(text: str) -> list[str]:
 
 
 def extract_emails(text: str) -> list[str]:
-    """Extract email addresses (NOT UPI IDs)."""
-    matches = EMAIL_PATTERN.findall(text)
+    """Extract email addresses (NOT UPI IDs).
+    
+    Also captures UPI-style handles (no TLD like @fakebank) when used in email context
+    e.g. 'I emailed from scammer.fraud@fakebank' → captured in emailAddresses.
+    This handles real scammer patterns where they use their UPI handle as their email.
+    """
     emails = []
+
+    # 1. Standard emails with TLD (.com, .in, .co.in, etc.)
+    matches = EMAIL_PATTERN.findall(text)
     for m in matches:
-        # Emails MUST have a dot in the domain part (e.g. .com, .in, .co.in)
         at_pos = m.rfind('@')
         domain_part = m[at_pos+1:] if at_pos >= 0 else ''
         if '.' in domain_part:  # Has dot = real email, not UPI
             emails.append(m.lower())
+
+    # 2. Context-aware: UPI-style handles used as email (no TLD but "email" word nearby)
+    # e.g. "emailed you from scammer.fraud@fakebank" or "email ID scammer@fakebank"
+    email_context_pattern = re.compile(
+        r'(?:email(?:ed)?|e-mail)\s+(?:\w+\s+){0,4}?([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)',
+        re.IGNORECASE
+    )
+    for match in email_context_pattern.finditer(text):
+        candidate = match.group(1).lower()
+        at_pos = candidate.rfind('@')
+        domain_part = candidate[at_pos+1:] if at_pos >= 0 else ''
+        # Add if no TLD (UPI-style, would be missed by standard pattern)
+        if '.' not in domain_part and candidate not in emails:
+            emails.append(candidate)
+
+
     return list(set(emails))
 
 
