@@ -217,7 +217,7 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
         "aunty_persona": "aunty_persona",
     }
 
-    def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None) -> str:
+    def build_system_prompt(self, persona: str, turn_number: int, scam_type: Optional[str] = None, extracted_intel: Optional[dict] = None) -> str:
         """Build system prompt — aggressive extraction directive layered on top of persona."""
         turn_strategy = self.get_turn_strategy(turn_number)
 
@@ -240,11 +240,40 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
                 "- All words must be English.\n"
             )
 
-        # ── MANDATORY EXTRACTION DIRECTIVE ────────────────────────────────────
+        # ── INTEL STATUS BLOCK ────────────────────────────────────────────────
+        # Summarise what's already captured and what's still missing.
+        # This prevents the LLM from asking for things already extracted.
+        intel_status_block = ""
+        if extracted_intel:
+            already = []
+            missing = []
+            fields = [
+                ("phoneNumbers",   "phone number"),
+                ("upiIds",         "UPI ID"),
+                ("bankAccounts",   "bank account"),
+                ("emailAddresses", "email address"),
+                ("phishingLinks",  "phishing link/URL"),
+                ("caseIds",        "case/reference ID"),
+            ]
+            for field_key, label in fields:
+                if extracted_intel.get(field_key):
+                    already.append(f"✅ {label}: {list(extracted_intel[field_key])[:1][0]}")  # show first value
+                else:
+                    missing.append(f"❌ {label}")
+
+            intel_status_block = (
+                "\n📊 INTELLIGENCE STATUS:\n"
+                + ("  ALREADY EXTRACTED: " + ", ".join(already) + "\n" if already else "  Nothing extracted yet.\n")
+                + ("  STILL MISSING — ASK NOW: " + ", ".join(missing) if missing else "  ✔ All primary fields extracted!")
+                + "\n"
+            )
+
+        # ── MANDATORY EXTRACTION DIRECTIVE ───────────────────────────────────
         # This overrides the base persona prompt's casualness.
         # GUVI only gives 10 turns — we MUST extract a different data type each turn.
         extraction_target = turn_strategy.get("target", "any_intel")
         extraction_directive = (
+            f"{intel_status_block}"
             f"\n⚡ MANDATORY THIS TURN (Turn {turn_number}) — TARGET: {extraction_target}\n"
             f"{turn_strategy['instructions'].strip()}\n"
             "\nRULE: Your response MUST contain a direct question asking for the above target.\n"
@@ -273,7 +302,8 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
         scammer_message: str,
         turn_number: int,
         conversation_history: Optional[List[Dict]] = None,
-        scam_type: Optional[str] = None
+        scam_type: Optional[str] = None,
+        extracted_intel: Optional[dict] = None
     ) -> str:
         """
         Generate a contextual response using LLM.
@@ -284,6 +314,7 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
             turn_number: Current turn number
             conversation_history: Previous conversation (optional)
             scam_type: Type of scam detected (optional)
+            extracted_intel: Dict of already-extracted intelligence (optional)
             
         Returns:
             Generated response text
@@ -291,7 +322,7 @@ Keep them engaged. Re-ask for name, employee ID, phone or email."""
         logger.info(f"Generating response for {persona}, turn {turn_number}")
         
         # Build system prompt with templates and strategy
-        system_prompt = self.build_system_prompt(persona, turn_number, scam_type)
+        system_prompt = self.build_system_prompt(persona, turn_number, scam_type, extracted_intel)
         
         # Build user message (include context if available)
         user_message = f"Scammer's message: {scammer_message}\n\nGenerate your response:"

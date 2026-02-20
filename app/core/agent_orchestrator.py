@@ -206,11 +206,24 @@ class AgentOrchestrator:
                 logger.warning(f"RL strategy failed: {e}")
 
         # ── STEP 5: Generate persona response ─────────────────────────────────────
+        # Build an extracted_intel dict from session so the LLM knows what's already captured
+        extracted_intel_dict = None
+        if hasattr(session, 'intelligence') and session.intelligence:
+            extracted_intel_dict = {
+                "phoneNumbers":   list(getattr(session.intelligence, 'phoneNumbers', set())),
+                "upiIds":         list(getattr(session.intelligence, 'upiIds', set())),
+                "bankAccounts":   list(getattr(session.intelligence, 'bankAccounts', set())),
+                "emailAddresses": list(getattr(session.intelligence, 'emailAddresses', set())),
+                "phishingLinks":  list(getattr(session.intelligence, 'phishingLinks', set())),
+                "caseIds":        list(getattr(session.intelligence, 'caseIds', set())),
+            }
+
         response = await session.agent.generate_response(
             scammer_message=scammer_message,
             conversation_history=conversation_history,
             additional_context=additional_context,
-            scam_type=session.scam_type
+            scam_type=session.scam_type,
+            extracted_intel=extracted_intel_dict
         )
 
         response = response.strip()

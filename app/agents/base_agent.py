@@ -105,17 +105,13 @@ class BaseAgent(ABC):
         scammer_message: str,
         conversation_history: List[Dict[str, Any]] = None,
         additional_context: str = "",
-        scam_type: Optional[str] = None
+        scam_type: Optional[str] = None,
+        extracted_intel: Optional[dict] = None
     ) -> str:
         """
-        LLM-FIRST STRATEGY with Fast Fallback:
-        - ALL TURNS: Try Advanced LLM first (with 4s timeout)
-        - Turns 1-2: BUILD TRUST phase - natural reactions like "Kya?! Block? Why?"
-        - Turns 3-6: ASK QUESTIONS phase
-        - Turns 7-9: REVERSE EXTRACTION - get scammer's info!
-        - Turns 10+: DELAY TACTICS
-        - If LLM times out (>4s), fall back to persona templates
-        - ALL responses enhanced with human-like typos and errors ✨
+        LLM-FIRST STRATEGY with Fast Fallback.
+        extracted_intel: dict of already-extracted intel (phones, UPI IDs, etc.)
+                        passed through to ResponseGenerator so it knows what's missing.
         """
         # Count only scammer messages (conversation_history has both scammer+agent)
         turn_count = len([msg for msg in (conversation_history or []) if msg.get("sender") == "scammer"])
@@ -131,7 +127,8 @@ class BaseAgent(ABC):
                     scammer_message=scammer_message,
                     turn_number=turn_count,
                     conversation_history=conversation_history,
-                    scam_type=scam_type
+                    scam_type=scam_type,
+                    extracted_intel=extracted_intel
                 )
                 self._update_state(scammer_message, response)
                 
@@ -141,6 +138,17 @@ class BaseAgent(ABC):
                 # Make response more human-like
                 response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
                 
+                # 🚨 HINGLISH GATE: Discard LLM response if predominantly Hinglish
+                # is_english_response() returns False when >25% of words are Hindi
+                # This prevents "Arre Rahul ji..." style outputs reaching GUVI's English evaluator
+                if not self.is_english_response(response):
+                    logger.warning(f"⚠️ {self.persona_name} Turn {turn_count}: Hinglish response detected, using English fallback. Response was: {response[:60]}...")
+                    response = self._get_stateful_fallback(scammer_message, turn_count)
+                    response = self.strip_hinglish(response)
+                    response = make_human(response, persona=self._get_persona_type(), turn_count=turn_count)
+                    self._update_state(scammer_message, response)
+                    return response
+
                 logger.info(f"✅ {self.persona_name} Turn {turn_count} Advanced LLM SUCCESS: {response[:50]}...")
                 return response
                 

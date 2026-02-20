@@ -188,13 +188,13 @@ class ConversationDirectorAgent:
         has_email = bool(extracted_so_far.get("emails"))
         has_digital = has_upi or has_url or has_email  # got something digital already
 
-        # Phase 1: Build trust (turns 1-2)
-        if turn_number <= 2:
+        # Phase 1: Build trust (turn 1 ONLY — just react)
+        if turn_number <= 1:
             strategy = self.PHASE_STRATEGIES["build_trust"].copy()
             strategy["priority"] = "establish_rapport"
 
-        # Phase 2: Extract digital IDs (turns 3-5)
-        elif turn_number <= 5:
+        # Phase 2: Extract digital IDs (turns 2-4) — START EARLY
+        elif turn_number <= 4:
             strategy = self.PHASE_STRATEGIES["extract_digital"].copy()
             if has_upi and has_url:
                 # Already have digital IDs, move to contact
@@ -202,35 +202,44 @@ class ConversationDirectorAgent:
             strategy["priority"] = "get_upi_or_link"
 
             # ── CIRCLE BACK to phone after getting email/UPI ──────────────────
-            # If we have some digital info but no phone yet, ask for phone
-            # with a natural friendly reason ("easier to reach you")
             if has_digital and not has_phone:
                 strategy["circle_back_phone"] = True
 
-        # Phase 3: Extract contact info (turns 6-8)
-        elif turn_number <= 8:
+        # Phase 3: Extract contact info (turns 5-7)
+        elif turn_number <= 7:
             strategy = self.PHASE_STRATEGIES["extract_contact"].copy()
             if has_phone:
                 # Already have phone, try financial
                 strategy = self.PHASE_STRATEGIES["extract_financial"].copy()
             else:
-                # Still no phone — mark as circle back opportunity
                 if has_digital:
                     strategy["circle_back_phone"] = True
             strategy["priority"] = "get_phone_number"
 
-        # Phase 4: Extract financial (turns 9-11)
-        elif turn_number <= 11:
+        # Phase 4: Extract financial (turns 8-10)
+        elif turn_number <= 10:
             strategy = self.PHASE_STRATEGIES["extract_financial"].copy()
             if has_account:
-                # Have everything, start stalling
                 strategy = self.PHASE_STRATEGIES["stall"].copy()
             strategy["priority"] = "get_bank_account"
 
-        # Phase 5: Stall (turns 12+)
+        # Phase 5: Stall (turns 11+)
         else:
             strategy = self.PHASE_STRATEGIES["stall"].copy()
             strategy["priority"] = "waste_time"
+
+        # ── MISSING INTEL OVERRIDE ────────────────────────────────────────────
+        # After choosing baseline strategy, inject specific missing categories
+        # so the LLM always targets what hasn't been extracted yet.
+        missing = []
+        if not has_phone:   missing.append("phone_number")
+        if not has_upi:     missing.append("upi_id")
+        if not has_account: missing.append("bank_account")
+        if not has_email:   missing.append("email_address")
+        if not has_url:     missing.append("phishing_link")
+        if missing:
+            strategy["missing_intel"] = missing
+            strategy["extraction_targets"] = missing[:2]  # prioritise top 2 gaps
 
         # Special case: if scammer is asking for OTP/PIN/CVV, redirect to extraction
         if any(req in scammer_requesting for req in ["otp", "cvv", "pin", "password"]):
@@ -414,6 +423,23 @@ class ConversationDirectorAgent:
         targets = strategy.get("extraction_targets", [])
         if targets:
             hints.append(f"EXTRACTION TARGETS THIS TURN: {', '.join(targets)}")
+
+        # ── MISSING INTEL BLOCK ───────────────────────────────────────────────
+        # Tell the persona agent exactly what data is still missing so it
+        # knows what to ask for this turn without wasting the question.
+        missing = strategy.get("missing_intel", [])
+        if missing:
+            hints.append(
+                f"\n🚨 MISSING INTEL — YOU MUST ASK FOR ONE OF THESE THIS TURN:\n"
+                + "\n".join(f"  ❌ {item}" for item in missing)
+                + "\n✅ If scammer shared it, acknowledge and IMMEDIATELY ask for the next missing item."
+            )
+        if turn_number >= 7 and missing:
+            # Escalation: approaching end of conversation
+            hints.append(
+                f"⚠️ ONLY {10 - turn_number} TURNS LEFT! You MUST collect the above intel NOW."
+                " Ask directly — don't delay."
+            )
 
         # OTP redirect
         if strategy.get("redirect_otp"):
