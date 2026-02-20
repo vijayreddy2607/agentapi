@@ -99,19 +99,22 @@ class GroqClient:
                 return generated_text
                 
         except httpx.HTTPStatusError as e:
-            # 429 rate limit → rotate to next available key
+            # 429 rate limit → rotate to next available key (round-robin)
             if e.response.status_code == 429:
-                # Find next key in rotation that isn't the current one
                 try:
                     current_idx = self._all_keys.index(self.current_key)
-                    next_keys = [k for i, k in enumerate(self._all_keys) if i > current_idx]
-                    if next_keys:
-                        self.current_key = next_keys[0]
-                        logger.warning(f"Groq key rate limited, rotating to key #{current_idx + 2} of {len(self._all_keys)}")
+                    # Round-robin: go to next key, wrapping back to key 0 after last
+                    next_idx = (current_idx + 1) % len(self._all_keys)
+                    if next_idx != self._all_keys.index(self.primary_key) or current_idx != 0:
+                        self.current_key = self._all_keys[next_idx]
+                        logger.warning(
+                            f"⚠️ Groq key #{current_idx + 1} rate limited, "
+                            f"rotating to key #{next_idx + 1} of {len(self._all_keys)}"
+                        )
                         return await self.generate_response(system_prompt, user_message, temperature, max_tokens)
                     else:
-                        logger.error("All Groq keys rate limited")
-                except ValueError:
+                        logger.error("🚫 ALL Groq keys exhausted — using fallback response")
+                except (ValueError, ZeroDivisionError):
                     pass
             logger.error(f"Groq API error: {e}")
             raise Exception(f"LLM error: {e}")
