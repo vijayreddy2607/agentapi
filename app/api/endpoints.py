@@ -158,12 +158,34 @@ async def process_message(
         
         # Stage 3: Generate Agent Response (multi-agent pipeline)
         if session.scam_detected:
-            agent_response, intel_log = await agent_orchestrator.generate_response(
-                session=session,
-                scammer_message=request.message.text,
-                conversation_history=history_dict,
-                rl_action=rl_action  # Pass RL action to agent
+            # 🎯 SMART CLOSE: If all key intel already collected, return graceful close
+            intel = session.intelligence
+            _all_key_fields_collected = (
+                bool(intel.phoneNumbers) and
+                bool(intel.upiIds) and
+                bool(intel.bankAccounts) and
+                bool(intel.emailAddresses) and
+                bool(intel.phishingLinks) and
+                bool(intel.caseIds)
             )
+            if _all_key_fields_collected:
+                import random as _rnd
+                _closing = [
+                    "Thank you! I have noted everything. Let me confirm with my family and call you back.",
+                    "I have all your details written down. I need some time to verify. Thank you!",
+                    "Oh, so much information! Let me check all this and get back to you shortly.",
+                    "Got it, thank you! I will discuss with my son and call back in 10 minutes.",
+                ]
+                agent_response = _rnd.choice(_closing)
+                intel_log = {"status": "all_intel_collected", "closing": True}
+                logger.info(f"✅ ALL KEY INTEL COLLECTED — sending graceful close response")
+            else:
+                agent_response, intel_log = await agent_orchestrator.generate_response(
+                    session=session,
+                    scammer_message=request.message.text,
+                    conversation_history=history_dict,
+                    rl_action=rl_action  # Pass RL action to agent
+                )
             # Attach intelligence log to session for tracking
             if not hasattr(session, 'intelligence_logs'):
                 session.intelligence_logs = []

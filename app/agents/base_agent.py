@@ -395,11 +395,11 @@ class BaseAgent(ABC):
                 "I wrote your case ID. Now please tell me your UPI handle one more time?",
                 "Sorry, I missed the UPI ID — what was it? Please share it again!"
             ],
-            # Turn 9+ — Bank account if not yet collected / stall
+            # Turn 9+ — Graceful close when all intel is collected
             [
-                "One more thing please — what is your bank account number and IFSC code?",
-                "I am noting everything down. What is your account number for verification?",
-                "Please give me your bank account number — I need to verify the source!"
+                "I have everything noted! Let me verify this with my husband and call you back.",
+                "Thank you, I have written everything down. Please give me some time to confirm.",
+                "Oh, too much information! I need to sit down and verify all this. I will call you back."
             ],
         ]
         
