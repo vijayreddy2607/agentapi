@@ -114,7 +114,9 @@ class BaseAgent(ABC):
                         passed through to ResponseGenerator so it knows what's missing.
         """
         # Count only scammer messages (conversation_history has both scammer+agent)
-        turn_count = len([msg for msg in (conversation_history or []) if msg.get("sender") == "scammer"])
+        # Add +1 because conversation_history is the history BEFORE the current message;
+        # the current scammer message is not yet in the list, so turn 1 would read as 0.
+        turn_count = 1 + len([msg for msg in (conversation_history or []) if msg.get("sender") == "scammer"])
         
         # Use Advanced ResponseGenerator with turn-based strategy 🔥
         logger.info(f"🔥 {self.persona_name} Turn {turn_count}: Using Advanced LLM (4s timeout)")

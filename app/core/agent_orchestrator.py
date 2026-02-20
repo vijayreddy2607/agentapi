@@ -123,6 +123,8 @@ class AgentOrchestrator:
             state.mark_shared("url")
         if intel_log.get("bank_accounts"):
             state.mark_shared("bank_account")
+        if intel_log.get("case_ids"):
+            state.mark_shared("case_id")
 
         # Detect refusals in scammer message — mark specific field refused
         _refusal_phrases = [
@@ -163,6 +165,10 @@ class AgentOrchestrator:
                 "phone_numbers": list(getattr(session.intelligence, 'phoneNumbers', set())),
                 "bank_accounts": list(getattr(session.intelligence, 'bankAccounts', set())),
                 "urls": list(getattr(session.intelligence, 'phishingLinks', set())),
+                "emails": list(getattr(session.intelligence, 'emailAddresses', set())),
+                "case_ids": list(getattr(session.intelligence, 'caseIds', set())),
+                "policy_numbers": list(getattr(session.intelligence, 'policyNumbers', set())),
+                "order_numbers": list(getattr(session.intelligence, 'orderNumbers', set())),
             }
 
         director_decision = conversation_director.decide(

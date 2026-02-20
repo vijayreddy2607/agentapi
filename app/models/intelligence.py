@@ -54,14 +54,15 @@ class Intelligence(BaseModel):
         self.orderNumbers.add(order.upper())
     
     def to_dict(self) -> dict:
-        """Convert to dictionary with lists instead of sets."""
+        """Convert to dictionary with lists instead of sets.
+        Only includes fields that GUVI evaluates — suspiciousKeywords is internal only.
+        """
         return {
             "bankAccounts": list(self.bankAccounts),
             "upiIds": list(self.upiIds),
             "phishingLinks": list(self.phishingLinks),
             "phoneNumbers": list(self.phoneNumbers),
             "emailAddresses": list(self.emailAddresses),
-            "suspiciousKeywords": list(self.suspiciousKeywords),
             "caseIds": list(self.caseIds),
             "policyNumbers": list(self.policyNumbers),
             "orderNumbers": list(self.orderNumbers),

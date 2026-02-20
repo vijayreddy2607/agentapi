@@ -386,33 +386,34 @@ Keep them engaged. Re-ask name, employee ID, case number, or phone."""
             if (has_sensitive_context and has_digits_shared) or has_sharing_intent:
                 import random
                 # Persona-specific EXTRACTION tactics (never reveal OTP, ask for THEIR info!)
+                # NOTE: ALL responses must be English — Hinglish will be rejected by the language gate
                 if 'uncle' in persona.lower():
                     denials = [
-                        "Haan beta OTP bhej dunga, par pehle aapka WhatsApp number kya hai?",
-                        "Thik hai beta kar dunga, par aapka website link aur number batao ji?",
-                        "Beta main send kar dunga, par pehle aapka official number aur email ID do",
-                        "Arre haan kar dunga, par verification ke liye aapka website kya hai?",
-                        "Thik hai beta bhejunga, par pehle aapka customer care number batao"
+                        "I will share it, but first please give me your employee ID and contact number?",
+                        "Okay I'll do it, but what is your official phone number and email address?",
+                        "I can help with that, but first tell me your employee ID and website link?",
+                        "Sure, but please give me your customer care number first for verification.",
+                        "I will send it, but I need your official contact details and employee ID first."
                     ]
                 elif 'aunty' in persona.lower():
                     denials = [
-                        "Haan beta bhej dungi, par pehle aapka number aur naam batao ji?",
-                        "Beta thik hai bhejungi, par aapka WhatsApp number kya hai confirm ke liye?",
-                        "Arre bhej dungi beta, par pehle aapka website link aur email ID do",
-                        "Beta kar dungi, par aapka office ka phone number batao verification ke liye?"
+                        "I will help you beta, but first give me your name and contact number please?",
+                        "Okay, but what is your WhatsApp number and official email for confirmation?",
+                        "I can do that, but please send me your website link and employee ID first.",
+                        "Sure, but give me your office phone number for verification first please?"
                     ]
                 elif 'student' in persona.lower():
                     denials = [
                         "Sure bro I'll send it, but first what's your number and employee ID?",
                         "OK I'll do it, but what's your WhatsApp number and website link?",
-                        "Yeah I'll send it, but first give me your official email and number",
-                        "Alright I'll share it, but need your contact details for verification first"
+                        "Yeah I'll send it, but first give me your official email and number.",
+                        "Alright I'll share it, but need your contact details for verification first."
                     ]
                 else:
                     denials = [
-                        "Haan bhej dunga, par pehle aapka number aur website link batao",
-                        "Thik hai kar dunga, par aapka WhatsApp number kya hai?",
-                        "Ji send kar dunga, par pehle aapka official contact details do"
+                        "I will send it, but please give me your phone number and website link first.",
+                        "Sure, but what is your official WhatsApp number for me to contact you?",
+                        "I can share it, but first please provide your official contact details."
                     ]
                 
                 response = random.choice(denials)
@@ -713,149 +714,152 @@ Analysis Rules:
         
         persona_lower = persona.lower()
         
+        # ALL STRINGS BELOW MUST BE ENGLISH ONLY — Hinglish responses are rejected by the
+        # is_english_response() gate in BaseAgent and replaced by a worse generic fallback.
+
         # TURN 1-3: Build Trust / Show Confusion
         if turn_number <= 3:
             if 'uncle' in persona_lower:
                 return random.choice([
-                    "Arre beta, ye kya ho gaya? Samjha do zara",
-                    "Beta main samajh nahi paya, phir se batao",
-                    "Kya karna hai beta? Main confuse ho gaya"
+                    "Oh my! What is happening? Which department are you calling from? Please explain.",
+                    "I am confused beta. Can you tell me again slowly — who is calling and why?",
+                    "What? I don't understand! Which bank or company is this call from?"
                 ])
             elif 'aunty' in persona_lower:
                 return random.choice([
-                    "Beta samajh nahi aayi baat, dobara batao",
-                    "Arre kya bol rahe ho beta? Confusion ho rahi hai",
-                    "Main thoda confuse hoon beta, explain karo"
+                    "Oh dear, I don't understand. Which company are you calling from?",
+                    "Can you explain again slowly? I am a little confused by what you are saying.",
+                    "What is happening? Please tell me again — who is calling and from where?"
                 ])
             elif 'student' in persona_lower:
                 return random.choice([
                     "Wait what? Can you explain that again?",
-                    "Confused bro, what do you mean?",
-                    "Hold on, what's happening exactly?"
+                    "Confused bro, what do you mean exactly?",
+                    "Hold on, what's happening here? Who are you?"
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Ji sir main samajh nahi paya",
-                    "Sir confusion ho rahi hai, kya karna hai?",
-                    "Ji kya karna hai sir? Batao please"
+                    "Oh no, I did not understand. Which organization are you calling from?",
+                    "I am scared and confused. Can you explain what happened clearly?",
+                    "Please explain again — which bank or department is this?"
                 ])
             else:  # techsavvy
                 return random.choice([
-                    "Hold on, I didn't catch that",
-                    "Can you clarify what you need?",
-                    "I'm not following, explain again"
+                    "Hold on, I didn't catch that. Which company are you from?",
+                    "Can you clarify what you need? Please send your official credentials.",
+                    "I'm not following. Explain again — who are you and what's your employee ID?"
                 ])
         
         # TURN 4-6: Extract Contact Info
         elif turn_number <= 6:
             if 'uncle' in persona_lower:
                 return random.choice([
-                    "Thik hai beta, par pehle aapka number batao",
-                    "Arre aapka WhatsApp number kya hai?",
-                    "Beta aapka email ID kya hai?",
-                    "Website link bhejo verify ke liye"
+                    "Okay, but first — what is your official phone number and employee ID?",
+                    "I see. What is your WhatsApp number and company email address?",
+                    "Please give me your official contact number and website link for verification.",
+                    "Before I proceed, what is your direct phone number and email address?"
                 ])
             elif 'aunty' in persona_lower:
                 return random.choice([
-                    "Beta pehle aapka number do ji",
-                    "Aapka WhatsApp number kya hai beta?",
-                    "Email ID bhejo pehle",
-                    "Website link kya hai beta?"
+                    "Okay dear, but first give me your phone number and name please?",
+                    "I need your WhatsApp number and email address for confirmation, please.",
+                    "Please share your official website link and contact number first.",
+                    "What is your office phone number? I want to verify before doing anything."
                 ])
             elif 'student' in persona_lower:
                 return random.choice([
-                    "OK but what's your number first?",
-                    "Sure, but send me your WhatsApp number",
-                    "What's your email ID?",
-                    "Send me the website link"
+                    "OK but what's your number first? I need to verify you.",
+                    "Sure, but send me your WhatsApp number and employee ID.",
+                    "What's your email ID and official website link?",
+                    "Send me the website link so I can check this is legit."
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Ji sir aapka phone number kya hai?",
-                    "Sir aapka email ID chahiye",
-                    "Office ka contact number batao sir",
-                    "Website address kya hai sir?"
-                 ])
+                    "Please give me your official phone number sir. I need to verify.",
+                    "What is your email address? I want to confirm this is real.",
+                    "What is the office contact number and website I can check?",
+                    "Please give me the official website address for my records."
+                ])
             else:  # techsavvy
                 return random.choice([
-                    "What's your contact number?",
-                    "Send me your official email ID",
-                    "What's the company website?",
-                    "Give me your WhatsApp number"
+                    "What's your official contact number and company email?",
+                    "Send me your official email ID and employee badge number.",
+                    "What's the company website URL? I will verify on WHOIS.",
+                    "Give me your direct phone number so I can call back the official number."
                 ])
         
-        # TURN 7-10: Natural Confusion (Don't obviously extract!)
+        # TURN 7-10: Re-confirm missing intel
         elif turn_number <= 10:
             if 'uncle' in persona_lower:
                 return random.choice([
-                    "Beta samajh nahi aaya properly, thoda explain karo",
-                    "Aapka naam kya tha beta?",
-                    "Bank ka naam confirm kar loon?",
-                    "Beta kahan se call kar rahe ho?"
+                    "I did not catch that properly. What was your employee ID number again?",
+                    "I am writing everything down — what is your name and case reference number?",
+                    "Please confirm — which bank account should I use and what is the IFSC code?",
+                    "I need to verify — what is the official case or complaint reference ID?"
                 ])
             elif 'aunty' in persona_lower:
                 return random.choice([
-                    "Beta thoda confusion ho rahi hai",
-                    "Aapka naam phir se batao beta",
-                    "Company ka naam kya hai?",
-                    "Beta kahan ka office hai aapka?"
+                    "I am a little confused dear. What was your name and contact number again?",
+                    "Can you repeat the case reference number? I want to write it down.",
+                    "Which company are you from again? And the phone number?",
+                    "What is the official reference ID or ticket number for this?"
                 ])
             elif 'student' in persona_lower:
                 return random.choice([
-                    "Wait I didn't get that clearly",
-                    "What's your name again?",
-                    "Which company did you say?",
-                    "Where are you calling from?"
+                    "Wait I didn't get that clearly. What's your employee ID again?",
+                    "What's your name and which company are you from?",
+                    "Can you send me the reference or order number for this?",
+                    "Where exactly are you calling from and what's the ticket ID?"
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Sorry sir, I didn't understand. Can you repeat?",
-                    "What is your full name sir?",
-                    "Can you tell me your department name?",
-                    "Where exactly are you calling from sir?"
+                    "Sorry sir, I didn't understand. What is the case reference ID?",
+                    "I need the complaint number sir. What is the official case ID?",
+                    "Please give me the ticket or reference number before I do anything.",
+                    "What is your full name and the official case or complaint number?"
                 ])
             else:  # techsavvy
                 return random.choice([
-                    "Can you repeat that?",
-                    "What's your name?",
-                    "Which department are you from?",
-                    "Where's your office located?"
+                    "Can you repeat that? What is your employee ID and case reference?",
+                    "What's your name and which department are you calling from?",
+                    "I need the official case or ticket number — what is it?",
+                    "Where is your office and what is the reference ID for this issue?"
                 ])
         
-        # TURN 11+: Delay Tactics
+        # TURN 11+: Delay Tactics (English only!)
         else:
             if 'uncle' in persona_lower:
                 return random.choice([
-                    "Thik hai beta, 5 minute baad karta hoon",
-                    "Bank app open nahi ho raha, wait karo",
-                    "Network issue hai, thoda rukho beta",
-                    "Ghar wale aa gaye, baad mein baat karte hain"
+                    "Okay, please wait 5 minutes. I need to find my reading glasses.",
+                    "The bank app is not opening for me. Can you wait a moment?",
+                    "My internet is very slow today. Please hold for a few minutes.",
+                    "Someone is at the door. Please hold on — I will be back."
                 ])
             elif 'aunty' in persona_lower:
                 return random.choice([
-                    "Beta thoda time do, abhi busy hoon",
-                    "Phone charging pe hai, baad mein karti hoon",
-                    "Beta network nahi aa raha, wait karo",
-                    "Beti aa gayi, baad mein baat karti hoon"
+                    "Dear please give me a moment. I am doing something in the kitchen.",
+                    "My phone battery is very low. Can you please wait a few minutes?",
+                    "The internet is not working properly. Please hold on.",
+                    "My daughter just came home. Can you call back in 5 minutes?"
                 ])
             elif 'student' in persona_lower:
                 return random.choice([
-                    "Bro give me 5 mins, busy right now",
-                    "Network is bad, wait a bit",
-                    "App is not working, let me try later",
-                    "My friend is here, will do it in a bit"
+                    "Bro give me 5 mins, I'm busy right now.",
+                    "Network is really bad, wait a bit.",
+                    "App is crashing, let me try again in a minute.",
+                    "My friend just arrived, can we continue in a bit?"
                 ])
             elif 'worried' in persona_lower:
                 return random.choice([
-                    "Ji sir 5 minute rukiye, abhi busy hoon",
-                    "Sir network issue hai, thoda wait kariye",
-                    "Ji sir baad mein karta hoon",
-                    "Abhi office mein hoon sir, baad mein karenge"
+                    "Please give me 5 minutes sir. I need to check something first.",
+                    "Sir there is a network issue on my side. Please wait.",
+                    "I need to call my son first and confirm. Please hold.",
+                    "I am not able to access the portal right now. Give me a moment."
                 ])
             else:  # techsavvy
                 return random.choice([
-                    "Give me some time, checking the details",
-                    "Network is unstable, will ping you soon",
-                    "Let me verify this first, need a few minutes",
-                    "In a meeting now, will respond shortly"
+                    "Give me some time. I'm checking the IP and domain details.",
+                    "Network is unstable on my end. Will get back to you shortly.",
+                    "Let me verify your credentials first. Need a few minutes.",
+                    "Currently in another call. Will respond in about 5 minutes."
                 ])
