@@ -9,14 +9,19 @@ UPI_PATTERN = re.compile(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)', re.IGNORECASE)
 # Matches: 1234567890123456, 12345678901, 1234-5678-9012-3456
 BANK_ACCOUNT_PATTERN = re.compile(r'\b(\d{11,18}|\d{4}[-\s]?\d{4}[-\s]?\d{4,10})\b')
 
-# Phone Number Pattern: Indian phone numbers (various formats)
-# Matches: 9876543210, 98765-43210, +91-9876543210, +91 98765 43210
-# Also matches +91-1xxxxxxxxx (tech support / toll-free style numbers used in GUVI scenarios)
+# Phone Number Pattern: Indian phone numbers (ALL formats)
+# Matches:
+#   +91-9876543210     +91 9876543210    +91.9876543210
+#   (+91) 9876543210   91-9876543210     91 9876543210
+#   09876543210        9876543210        98765-43210
+#   98765 43210        9876 543210       9876.543210   +91-98765-43210
 PHONE_PATTERN = re.compile(
-    r'(\+?91[-\s]?[0-9]\d{9}'          # +91 followed by ANY 10 digits (covers 1xxx, 6-9xxx)
-    r'|\+?91[-\s]?[6-9]\d{4}[-\s]?\d{5}'  # +91-98765 43210
-    r'|\b[6-9]\d{4}[-\s]?\d{5}\b'         # 98765 43210 (no country code)
-    r'|\b[6-9]\d{9}\b)'                    # 9876543210 (10 digit)
+    r'(?:\(?\+?91\)?[\s.\-]?|(?<!\d)0)?'   # optional: +91 prefix or leading 0
+    r'('
+    r'[6-9]\d{4}[\s.\-]\d{5}'              # 5+sep+5: 98765-43210, 98765 43210, 9876.543210
+    r'|[6-9]\d{9}'                          # solid 10-digit: 9876543210
+    r')',
+    re.IGNORECASE
 )
 
 # URL Pattern: http/https links
@@ -225,20 +230,17 @@ def convert_written_numbers(text: str) -> str:
 
 
 def extract_phone_numbers(text: str) -> list[str]:
-    """Extract phone numbers from text, including written ones and hyphenated formats."""
+    """Extract phone numbers from text, including written ones and all Indian formats."""
     # First convert written numbers to digits
     text_converted = convert_written_numbers(text)
     
     matches = PHONE_PATTERN.findall(text_converted)
-    # Clean up format: remove +91, spaces, dashes
+    # Normalize: strip separators, add +91- prefix
     cleaned = []
     for match in matches:
-        clean = re.sub(r'[\s-]', '', match)
-        if clean.startswith('+91'):
-            clean = clean[3:]
-        elif clean.startswith('91') and len(clean) == 12:
-            clean = clean[2:]
-        cleaned.append('+91-' + clean)
+        clean = re.sub(r'[\s.\-]', '', match)  # remove any separator in the middle
+        if len(clean) == 10 and clean[0] in '6789':
+            cleaned.append('+91-' + clean)
     return list(set(cleaned))  # Remove duplicates
 
 
