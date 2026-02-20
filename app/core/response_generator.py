@@ -100,27 +100,30 @@ ASK FOR THE CASE/REFERENCE/TICKET/POLICY NUMBER.
 → OR: "What is my policy number or order number you are calling about?"
 You MUST ask for a case ID, reference number, policy or order number."""
         },
-        # ── TURN 7: Confirm all — re-ask any missing details ─────────────────
+        # ── TURN 7: Confirm all — re-ask any missing details — CASE ID PRIORITY ─
         "7": {
-            "name": "CONFIRMATION + OVERFLOW EXTRACTION",
-            "target": "any_missing_intel",
+            "name": "CASE ID + OVERFLOW EXTRACTION",
+            "target": "case_id + any_missing_intel",
             "instructions": """
-Say you want to confirm everything before proceeding. Ask them to REPEAT key details.
-→ "Before I do anything, please confirm: your phone number, UPI ID, and bank account?"
-→ OR: "I am noting everything down. Please repeat your contact number and UPI ID."
-→ OR: "So I have everything right — your number is ___? And UPI ID is?"
-Ask them to confirm/repeat their contact number AND payment details."""
+If scammer has NOT given a case ID / reference number yet, ASK FOR IT NOW.
+→ "What is the case reference ID or complaint number for this issue?"
+→ OR: "Can you give me the exact ticket or case number so I can file a report?"
+→ OR: "Before I do anything, I need the official case or reference ID — what is it?"
+If already have case ID, ask them to CONFIRM/REPEAT any missing intel:
+→ "I need to double-check — your phone number again? And the bank account?"
+CASE ID is the priority target this turn if not yet collected."""
         },
-        # ── TURNS 8-10: Stall + re-confirm identity ───────────────────────────
+        # ── TURNS 8-10: Stall + re-confirm any remaining gaps ────────────────────
         "8+": {
-            "name": "STALL + IDENTITY CONFIRMATION",
-            "target": "re-confirm + stall",
+            "name": "STALL + FINAL EXTRACTION",
+            "target": "re-confirm + case_id + stall",
             "instructions": """
-Stall while asking for their details one more time (memory excuse).
-→ "Sorry I lost my notes — can you repeat your employee ID and phone number?"
-→ OR: "My internet is slow, I am trying. What was your name and department again?"
-→ OR: "I am arranging the details. Please confirm your email ID and case number."
-Keep them engaged. Re-ask for name, employee ID, phone or email."""
+Stall while re-asking for any MISSING intel (check INTELLIGENCE STATUS above).
+→ If no case ID: "Sorry, I lost my notes — what was the case or reference number?"
+→ If no phone: "What is your direct callback number again?"
+→ If no UPI: "What UPI ID should the verification payment go to?"
+Always refer to INTELLIGENCE STATUS above to pick the right missing item.
+Keep them engaged. Re-ask name, employee ID, case number, or phone."""
         }
     }
     

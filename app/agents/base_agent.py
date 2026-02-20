@@ -361,27 +361,27 @@ class BaseAgent(ABC):
             ],
             # Turn 6
             [
-                "What if this is fraud? I cannot risk losing money! Let me verify with my bank first.",
-                "I cannot afford any loss! I need double verification before doing anything!",
-                "Is this related to a tax audit? Oh no, I was afraid this would happen!"
+                "What if this is fraud? What is the official case reference ID for this issue?",
+                "I cannot afford any loss! Before I do anything, please give me the case number!",
+                "Is there a reference or ticket number? I need to write it down before I proceed."
             ],
             # Turn 7
             [
-                "My hands are shaking! I cannot think straight! This is too overwhelming!",
-                "I need a moment... please hold on while I calm down.",
-                "Please stop pressuring me! I need time to process this!"
+                "My hands are shaking! What is the official case ID or complaint number? I am writing it down!",
+                "I need to note everything. What is the case reference ID or ticket number for this?",
+                "Please stop pressuring me! Give me the case or reference number first!"
             ],
             # Turn 8
             [
-                "Please, I need 24 hours to process this! I am too scared to decide right now!",
-                "Please give me one day! I cannot do this right now!",
-                "I need to think about this overnight. Please call me tomorrow morning."
+                "Please, I need the case ID number! I cannot do anything without the reference number!",
+                "I wrote your phone and email. Now what is the official case or complaint ID?",
+                "I need to file a written complaint. What is the exact case reference number?"
             ],
             # Turn 9+
             [
-                "I do not know what to do! This is a lot! Can you please explain once more?",
-                "Why is this happening? What exactly did I do wrong? Please explain.",
-                "Please give me a moment. What is your official contact number again?"
+                "I do not know what to do! What was your case reference ID again? Please repeat.",
+                "Why is this happening? Please give me the official complaint number so I can verify.",
+                "Please give me a moment. What is the official case reference number for my complaint?"
             ],
         ]
         

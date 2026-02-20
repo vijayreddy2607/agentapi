@@ -186,6 +186,7 @@ class ConversationDirectorAgent:
         has_account = bool(extracted_so_far.get("bank_accounts"))
         has_url = bool(extracted_so_far.get("urls"))
         has_email = bool(extracted_so_far.get("emails"))
+        has_case_id = bool(extracted_so_far.get("case_ids"))
         has_digital = has_upi or has_url or has_email  # got something digital already
 
         # Phase 1: Build trust (turn 1 ONLY — just react)
@@ -237,6 +238,7 @@ class ConversationDirectorAgent:
         if not has_account: missing.append("bank_account")
         if not has_email:   missing.append("email_address")
         if not has_url:     missing.append("phishing_link")
+        if not has_case_id: missing.append("case_id / reference_number")
         if missing:
             strategy["missing_intel"] = missing
             strategy["extraction_targets"] = missing[:2]  # prioritise top 2 gaps
